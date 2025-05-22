@@ -127,7 +127,7 @@ export default function ContactSection() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 mb-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium text-foreground mb-2">
                       Last Name
                     </Label>
                     <Input
@@ -143,7 +143,7 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-foreground mb-2">
                     Email Address
                   </Label>
                   <Input
@@ -158,7 +158,7 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="company" className="text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="company" className="text-sm font-medium text-foreground mb-2">
                     Company
                   </Label>
                   <Input
@@ -173,7 +173,7 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="challenge" className="text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="challenge" className="text-sm font-medium text-foreground mb-2">
                     Business Challenge
                   </Label>
                   <Select value={formData.challenge} onValueChange={(value) => handleInputChange("challenge", value)} required>
@@ -193,7 +193,7 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="message" className="text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="message" className="text-sm font-medium text-foreground mb-2">
                     Message
                   </Label>
                   <Textarea
