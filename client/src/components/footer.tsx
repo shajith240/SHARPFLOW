@@ -1,5 +1,5 @@
 import { Github, Linkedin, Twitter } from "lucide-react";
-import artivanceLogo from "@assets/1.png";
+import artivanceLogo from "@assets/Artivance.png";
 
 export default function Footer() {
   const footerSections = [
