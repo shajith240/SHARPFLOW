@@ -10,15 +10,15 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="pt-24 pb-24 bg-gradient-to-br from-gray-50 to-white">
+    <section className="pt-24 pb-24 bg-gradient-to-br from-muted to-background">
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="max-w-xl">
-            <h1 className="text-5xl lg:text-6xl font-bold text-black leading-tight mb-6">
+            <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
               Automate Your Business with{" "}
               <span className="text-[#38B6FF]">AI Solutions</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Transform your operations, boost revenue, and increase efficiency with cutting-edge AI automation. Join hundreds of businesses already scaling with ARTIVANCE.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -38,7 +38,7 @@ export default function HeroSection() {
                 Watch Demo
               </Button>
             </div>
-            <div className="mt-8 flex items-center space-x-6 text-sm text-gray-500">
+            <div className="mt-8 flex items-center space-x-6 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <Check className="w-4 h-4 text-[#C1FF72]" />
                 <span>No Credit Card Required</span>

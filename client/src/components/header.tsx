@@ -25,7 +25,7 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+    <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border z-50">
       <div className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -35,25 +35,25 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => scrollToSection('services')}
-              className="text-gray-700 hover:text-[#38B6FF] transition-colors"
+              className="text-foreground hover:text-[#38B6FF] transition-colors"
             >
               Services
             </button>
             <button 
               onClick={() => scrollToSection('pricing')}
-              className="text-gray-700 hover:text-[#38B6FF] transition-colors"
+              className="text-foreground hover:text-[#38B6FF] transition-colors"
             >
               Pricing
             </button>
             <button 
               onClick={() => scrollToSection('testimonials')}
-              className="text-gray-700 hover:text-[#38B6FF] transition-colors"
+              className="text-foreground hover:text-[#38B6FF] transition-colors"
             >
               Testimonials
             </button>
             <button 
               onClick={() => scrollToSection('contact')}
-              className="text-gray-700 hover:text-[#38B6FF] transition-colors"
+              className="text-foreground hover:text-[#38B6FF] transition-colors"
             >
               Contact
             </button>

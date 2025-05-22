@@ -70,11 +70,11 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-24 bg-gray-50">
+    <section id="pricing" className="py-24 bg-muted">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-black mb-4">Choose Your AI Automation Plan</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold text-foreground mb-4">Choose Your AI Automation Plan</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Flexible pricing that scales with your business. Start free and upgrade as you grow.
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function PricingSection() {
               className={`relative shadow-lg hover:shadow-xl transition-shadow ${
                 plan.popular 
                   ? 'bg-[#38B6FF] text-white border-2 border-[#38B6FF]' 
-                  : 'bg-white border border-gray-200'
+                  : 'bg-card border border-border'
               }`}
             >
               {plan.popular && (

@@ -75,11 +75,11 @@ const services = [
 
 export default function ServicesSection() {
   return (
-    <section id="services" className="py-24 bg-white">
+    <section id="services" className="py-24 bg-background">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-black mb-4">AI Automation Solutions</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold text-foreground mb-4">AI Automation Solutions</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             From customer service to data analysis, our AI solutions streamline your operations and drive measurable results.
           </p>
         </div>
@@ -90,19 +90,19 @@ export default function ServicesSection() {
             return (
               <Card 
                 key={index} 
-                className="bg-gray-50 border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
+                className="bg-card border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
               >
                 <CardContent className="p-8">
                   <div className="w-16 h-16 bg-[#38B6FF] rounded-xl flex items-center justify-center mb-6">
                     <Icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-black mb-4">{service.title}</h3>
-                  <p className="text-gray-600 mb-6">
+                  <h3 className="text-xl font-semibold text-foreground mb-4">{service.title}</h3>
+                  <p className="text-muted-foreground mb-6">
                     {service.description}
                   </p>
                   <ul className="space-y-2 mb-6">
                     {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center text-sm text-gray-600">
+                      <li key={featureIndex} className="flex items-center text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-[#C1FF72] mr-2 flex-shrink-0" />
                         {feature}
                       </li>
