@@ -29,7 +29,7 @@ export default function Header() {
       <div className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <img src={artivanceLogo} alt="ARTIVANCE Logo" className="h-20 w-auto" />
+            <img src={artivanceLogo} alt="ARTIVANCE Logo" className="h-28 w-auto" />
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
