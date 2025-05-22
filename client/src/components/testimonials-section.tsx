@@ -42,18 +42,18 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-24 bg-white">
+    <section id="testimonials" className="py-24 bg-background">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-black mb-4">What Our Clients Say</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold text-foreground mb-4">What Our Clients Say</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Join hundreds of businesses that have transformed their operations with ARTIVANCE AI solutions.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="bg-gray-50 border border-gray-100">
+            <Card key={index} className="bg-card border border-border">
               <CardContent className="p-8">
                 <div className="flex items-center mb-4">
                   <div className="flex text-yellow-400">
@@ -62,7 +62,7 @@ export default function TestimonialsSection() {
                     ))}
                   </div>
                 </div>
-                <p className="text-gray-700 mb-6 italic">
+                <p className="text-muted-foreground mb-6 italic">
                   "{testimonial.quote}"
                 </p>
                 <div className="flex items-center">
@@ -72,8 +72,8 @@ export default function TestimonialsSection() {
                     className="w-12 h-12 rounded-full object-cover mr-4"
                   />
                   <div>
-                    <div className="font-semibold text-black">{testimonial.author}</div>
-                    <div className="text-sm text-gray-600">{testimonial.role}</div>
+                    <div className="font-semibold text-foreground">{testimonial.author}</div>
+                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
                   </div>
                 </div>
               </CardContent>

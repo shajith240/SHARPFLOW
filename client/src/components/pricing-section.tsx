@@ -97,18 +97,18 @@ export default function PricingSection() {
               
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-black'}`}>
+                  <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-foreground'}`}>
                     {plan.name}
                   </h3>
-                  <p className={`mb-6 ${plan.popular ? 'text-blue-100' : 'text-gray-600'}`}>
+                  <p className={`mb-6 ${plan.popular ? 'text-blue-100' : 'text-muted-foreground'}`}>
                     {plan.description}
                   </p>
                   <div className="mb-6">
-                    <span className={`text-5xl font-bold ${plan.popular ? 'text-white' : 'text-black'}`}>
+                    <span className={`text-5xl font-bold ${plan.popular ? 'text-white' : 'text-foreground'}`}>
                       {plan.price}
                     </span>
                     {plan.period && (
-                      <span className={plan.popular ? 'text-blue-100' : 'text-gray-600'}>
+                      <span className={plan.popular ? 'text-blue-100' : 'text-muted-foreground'}>
                         {plan.period}
                       </span>
                     )}
@@ -131,7 +131,7 @@ export default function PricingSection() {
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center">
                       <Check className={`w-4 h-4 mr-3 ${plan.popular ? 'text-[#C1FF72]' : 'text-[#C1FF72]'}`} />
-                      <span className={plan.popular ? 'text-white' : 'text-gray-700'}>
+                      <span className={plan.popular ? 'text-white' : 'text-muted-foreground'}>
                         {feature}
                       </span>
                     </li>
@@ -143,7 +143,7 @@ export default function PricingSection() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">All plans include a money-back guarantee and can be cancelled anytime.</p>
+          <p className="text-muted-foreground mb-4">All plans include a money-back guarantee and can be cancelled anytime.</p>
           <button className="text-[#38B6FF] font-semibold hover:text-blue-600 flex items-center mx-auto">
             Compare all features 
             <Check className="w-4 h-4 ml-1" />

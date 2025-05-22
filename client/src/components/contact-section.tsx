@@ -76,12 +76,12 @@ export default function ContactSection() {
   ];
 
   return (
-    <section id="contact" className="py-24 bg-gradient-to-br from-gray-50 to-white">
+    <section id="contact" className="py-24 bg-gradient-to-br from-muted to-background">
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-4xl font-bold text-black mb-6">Ready to Transform Your Business?</h2>
-            <p className="text-xl text-gray-600 mb-8">
+            <h2 className="text-4xl font-bold text-foreground mb-6">Ready to Transform Your Business?</h2>
+            <p className="text-xl text-muted-foreground mb-8">
               Get a free consultation with our AI automation experts. We'll analyze your processes and show you exactly how much time and money you can save.
             </p>
             
@@ -91,12 +91,12 @@ export default function ContactSection() {
                   <div className="w-8 h-8 bg-[#C1FF72] rounded-full flex items-center justify-center">
                     <Check className="w-4 h-4 text-black" />
                   </div>
-                  <span className="text-gray-700">{benefit}</span>
+                  <span className="text-muted-foreground">{benefit}</span>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-[#38B6FF]" />
                 <span>+1 (555) 123-4567</span>
@@ -108,12 +108,12 @@ export default function ContactSection() {
             </div>
           </div>
 
-          <Card className="shadow-xl border border-gray-100">
+          <Card className="shadow-xl border border-border bg-card">
             <CardContent className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 mb-2">
+                    <Label htmlFor="firstName" className="text-sm font-medium text-foreground mb-2">
                       First Name
                     </Label>
                     <Input
