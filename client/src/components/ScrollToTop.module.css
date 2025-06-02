@@ -1,0 +1,215 @@
+/* SharpFlow Scroll to Top Button Styles */
+
+.scrollToTopButton {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #38b6ff 0%, #c1ff72 100%);
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.scrollToTopButton.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.scrollToTopButton:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(56, 182, 255, 0.4), 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #2ea5ff 0%, #b8ff5f 100%);
+}
+
+.scrollToTopButton:active {
+  transform: translateY(0) scale(0.95);
+  transition: all 0.1s ease-out;
+}
+
+.scrollToTopButton:focus {
+  outline: none;
+  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(56, 182, 255, 0.3);
+}
+
+/* Removed disabled state to ensure click responsiveness */
+
+.scrollToTopButton.scrolling {
+  background: linear-gradient(135deg, #2ea5ff 0%, #b8ff5f 100%);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.scrollToTopIcon {
+  transition: transform 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.scrollToTopButton:hover .scrollToTopIcon {
+  transform: translateY(-1px);
+}
+
+.scrollToTopRipple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+  pointer-events: none;
+}
+
+.scrollToTopButton:active .scrollToTopRipple {
+  width: 60px;
+  height: 60px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.02);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .scrollToTopButton {
+    bottom: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .scrollToTopIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Ensure it doesn't interfere with mobile navigation */
+@media (max-width: 640px) {
+  .scrollToTopButton {
+    bottom: 90px; /* Above mobile navigation if present */
+    right: 16px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .scrollToTopButton {
+    bottom: 25px;
+    right: 25px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1440px) {
+  .scrollToTopButton {
+    bottom: 40px;
+    right: 40px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .scrollToTopIcon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .scrollToTopButton {
+    background: #000 !important;
+    color: #fff !important;
+    border: 2px solid #fff;
+  }
+
+  .scrollToTopButton:hover {
+    background: #333 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .scrollToTopButton {
+    transition: opacity 0.3s ease;
+    animation: none;
+  }
+
+  .scrollToTopButton:hover {
+    transform: none;
+  }
+
+  .scrollToTopIcon {
+    transition: none;
+  }
+
+  .scrollToTopButton:hover .scrollToTopIcon {
+    transform: none;
+  }
+
+  .scrollToTopButton.scrolling {
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .scrollToTopButton {
+    background: linear-gradient(135deg, #38b6ff 0%, #c1ff72 100%);
+    color: #000;
+    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .scrollToTopButton:hover {
+    box-shadow: 0 8px 25px rgba(56, 182, 255, 0.5),
+      0 4px 8px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Focus visible for better accessibility */
+.scrollToTopButton:focus-visible {
+  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(56, 182, 255, 0.5);
+}
+
+/* Print styles */
+@media print {
+  .scrollToTopButton {
+    display: none;
+  }
+}
