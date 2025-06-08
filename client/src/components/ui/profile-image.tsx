@@ -34,15 +34,15 @@ const getInitials = (name?: string, email?: string): string => {
   return "U";
 };
 
-// Generate a color based on the user's name or email using SharpFlow brand colors
+// Generate a color based on the user's name or email using SharpFlow professional dark theme
 const getAvatarColor = (name?: string, email?: string): string => {
   const colors = [
-    "bg-[#38B6FF]", // SharpFlow Blue (primary)
-    "bg-[#C1FF72]", // SharpFlow Lime Green (secondary)
-    "bg-gradient-to-br from-[#38B6FF] to-[#C1FF72]", // Gradient combination
-    "bg-[#2563eb]", // Darker blue variant
-    "bg-[#10b981]", // Darker green variant
-    "bg-gradient-to-br from-[#C1FF72] to-[#38B6FF]", // Reverse gradient
+    "bg-secondary", // Sky Blue (#38B6FF)
+    "bg-primary", // Lime Green (#C1FF72)
+    "bg-gradient-to-br from-secondary to-primary", // Sky Blue to Lime Green
+    "bg-dashboard-info", // Sky Blue variant
+    "bg-dashboard-success", // Soft Green variant
+    "bg-gradient-to-br from-primary to-secondary", // Lime Green to Sky Blue
   ];
   const str = name || email || "default";
   const hash = str.split("").reduce((a, b) => {

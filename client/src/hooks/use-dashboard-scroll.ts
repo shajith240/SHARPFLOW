@@ -1,31 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface DashboardScrollState {
   scrollY: number;
   isScrolled: boolean;
   isAtTop: boolean;
   scrollDirection: "up" | "down" | null;
-  scrollingUp: boolean;
-  scrollingDown: boolean;
   headerVisible: boolean;
   lastScrollY: number;
 }
 
 interface DashboardScrollOptions {
   threshold?: number;
-  hideThreshold?: number;
-  debounceDelay?: number;
   hideOnScrollDown?: boolean;
 }
 
 /**
- * Enhanced scroll hook specifically designed for dashboard header behavior
- * Provides smooth hide/show functionality with performance optimizations
+ * Premium navbar auto-hide hook with professional UX behavior
+ * - Immediate hide on scroll down (1-2px sensitivity)
+ * - Persistent hide state (no flickering)
+ * - Smooth show on scroll up
+ * - Always visible at top of page
  */
 export function useDashboardScroll({
-  threshold = 50,
-  hideThreshold = 100,
-  debounceDelay = 10,
+  threshold = 10,
   hideOnScrollDown = true,
 }: DashboardScrollOptions = {}): DashboardScrollState {
   const [scrollState, setScrollState] = useState<DashboardScrollState>({
@@ -33,91 +30,88 @@ export function useDashboardScroll({
     isScrolled: false,
     isAtTop: true,
     scrollDirection: null,
-    scrollingUp: false,
-    scrollingDown: false,
     headerVisible: true,
     lastScrollY: 0,
   });
 
+  // Use refs for performance and to avoid stale closures
+  const lastScrollYRef = useRef(0);
+  const ticking = useRef(false);
+  const headerVisibleRef = useRef(true);
+
   const updateScrollState = useCallback(() => {
-    const currentScrollY =
-      window.pageYOffset || document.documentElement.scrollTop;
+    const currentScrollY = Math.max(
+      0,
+      window.pageYOffset || document.documentElement.scrollTop
+    );
 
-    setScrollState((prevState) => {
-      const scrollDifference = currentScrollY - prevState.lastScrollY;
-      const isScrollingUp = scrollDifference < 0;
-      const isScrollingDown = scrollDifference > 0;
+    const scrollDifference = currentScrollY - lastScrollYRef.current;
+    const isAtTop = currentScrollY <= 5; // Very small threshold for "at top"
 
-      // Determine if header should be visible
-      let headerVisible = true;
+    // Immediate scroll direction detection (1-2px sensitivity)
+    let scrollDirection: "up" | "down" | null = null;
+    if (Math.abs(scrollDifference) >= 1) {
+      scrollDirection = scrollDifference > 0 ? "down" : "up";
+    }
 
-      if (hideOnScrollDown) {
-        if (currentScrollY <= threshold) {
-          // Always show header when near top
-          headerVisible = true;
-        } else if (isScrollingUp) {
-          // Show header when scrolling up
-          headerVisible = true;
-        } else if (isScrollingDown && currentScrollY > hideThreshold) {
-          // Hide header when scrolling down past threshold
-          headerVisible = false;
-        } else {
-          // Maintain current state for small movements
-          headerVisible = prevState.headerVisible;
-        }
+    // Premium navbar visibility logic
+    let headerVisible = headerVisibleRef.current;
+
+    if (hideOnScrollDown) {
+      if (isAtTop) {
+        // Always show when at the very top
+        headerVisible = true;
+      } else if (scrollDirection === "down" && currentScrollY > threshold) {
+        // Hide immediately on scroll down (after minimal threshold)
+        headerVisible = false;
+      } else if (scrollDirection === "up") {
+        // Show immediately on scroll up
+        headerVisible = true;
       }
+      // For no scroll direction (paused), maintain current state - NO FLICKERING
+    }
 
-      return {
-        scrollY: currentScrollY,
-        isScrolled: currentScrollY > threshold,
-        isAtTop: currentScrollY <= threshold,
-        scrollDirection:
-          Math.abs(scrollDifference) > 5
-            ? isScrollingUp
-              ? "up"
-              : "down"
-            : prevState.scrollDirection,
-        scrollingUp: isScrollingUp && Math.abs(scrollDifference) > 5,
-        scrollingDown: isScrollingDown && Math.abs(scrollDifference) > 5,
-        headerVisible,
-        lastScrollY: currentScrollY,
-      };
-    });
-  }, [threshold, hideThreshold, hideOnScrollDown]);
+    // Update ref for next comparison
+    headerVisibleRef.current = headerVisible;
+
+    // Update state with new values
+    setScrollState((prevState) => ({
+      scrollY: currentScrollY,
+      isScrolled: currentScrollY > threshold,
+      isAtTop,
+      scrollDirection: scrollDirection || prevState.scrollDirection,
+      headerVisible,
+      lastScrollY: currentScrollY,
+    }));
+
+    lastScrollYRef.current = currentScrollY;
+  }, [threshold, hideOnScrollDown]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    let ticking = false;
-
     const handleScroll = () => {
-      if (!ticking) {
+      if (!ticking.current) {
+        ticking.current = true;
+        // Use immediate execution for ultra-responsive navbar behavior
         requestAnimationFrame(() => {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-
-          timeoutId = setTimeout(() => {
-            updateScrollState();
-            ticking = false;
-          }, debounceDelay);
+          updateScrollState();
+          ticking.current = false;
         });
-        ticking = true;
       }
     };
 
-    // Add scroll listener with passive option for better performance
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Add scroll listener with maximum performance settings
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+      capture: false,
+    });
 
-    // Set initial state
+    // Set initial state immediately
     updateScrollState();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
     };
-  }, [updateScrollState, debounceDelay]);
+  }, [updateScrollState]);
 
   return scrollState;
 }

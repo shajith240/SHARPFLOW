@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { SubscriptionData } from "@/types/subscription";
 import { useLocation } from "wouter";
 import {
   Card,
@@ -19,12 +20,7 @@ import {
   MetricCard,
   StatusCard,
 } from "@/components/ui/dashboard-card";
-import {
-  DashboardParallaxSection,
-  DashboardParallaxItem,
-  DashboardStaggerContainer,
-  DashboardGlowEffect,
-} from "@/components/ui/dashboard-parallax";
+// Removed parallax imports for flat design
 import {
   BarChart3,
   Package,
@@ -82,11 +78,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { LeadGenerationDashboard } from "@/components/dashboard/LeadGenerationDashboard";
-import MultiBotConfigTab from "@/components/dashboard/MultiBotConfigTab";
 import DataIsolationStatus from "@/components/dashboard/DataIsolationStatus";
-import { TelegramSettings } from "@/components/dashboard/TelegramSettings";
 import { ReportsSection } from "@/components/dashboard/ReportsSection";
+import AgentChat from "@/components/ai-agents/AgentChat";
+import { SentinelChat } from "@/components/ai-agents/SentinelChat";
+import { EmailApprovalDashboard } from "@/components/ai-agents/EmailApprovalDashboard";
+import { PendingActivation } from "@/components/dashboard/PendingActivation";
 import { SubscriptionPlan } from "@/types/lead-generation";
+import {
+  ProcessingProvider,
+  useProcessing,
+} from "@/contexts/ProcessingContext";
 
 // Clean dashboard focused on lead generation only
 
@@ -151,12 +153,26 @@ export default function Dashboard() {
     data: subscriptionData,
     isLoading: subscriptionLoading,
     error: subscriptionError,
-  } = useQuery({
+  } = useQuery<SubscriptionData>({
     queryKey: ["/api/payments/subscription"],
     enabled: isAuthenticated,
     staleTime: 0, // Always refetch to get latest subscription data
     refetchOnWindowFocus: true, // Refetch when window gains focus
     retry: 3, // Retry failed requests
+  });
+
+  // Check user activation status
+  const {
+    data: activationData,
+    isLoading: activationLoading,
+    error: activationError,
+    refetch: refetchActivation,
+  } = useQuery({
+    queryKey: ["/api/dashboard/activation-status"],
+    enabled: isAuthenticated && subscriptionData?.hasActiveSubscription,
+    staleTime: 0, // Always refetch to get latest activation status
+    refetchOnWindowFocus: true,
+    retry: 3,
   });
 
   // Clean dashboard - no additional data fetching needed
@@ -405,280 +421,283 @@ export default function Dashboard() {
     );
   }
 
+  // Show pending activation if user has subscription but is not activated
+  if (
+    subscriptionData?.hasActiveSubscription &&
+    activationData &&
+    !activationLoading &&
+    activationData.is_pending_activation
+  ) {
+    return (
+      <PendingActivation
+        userEmail={user?.email || ""}
+        subscriptionPlan={subscriptionData.subscriptionPlan || ""}
+        subscriptionDate={
+          subscriptionData.subscription?.currentPeriodStart || ""
+        }
+        onRefresh={() => refetchActivation()}
+      />
+    );
+  }
+
   // Clean dashboard - no additional loading needed
 
   return (
-    <div
-      className={`min-h-screen bg-gradient-to-br from-dashboard-bg-primary via-dashboard-bg-secondary to-dashboard-bg-primary transition-opacity duration-300 ${
-        showDashboard ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      {/* Enhanced Dashboard Header with Scroll Behavior */}
-      <DashboardHeader
-        title="SharpFlow"
-        subtitle="Lead Generation System"
-        showNotifications={true}
-      />
-
-      {/* Main Dashboard Content with Parallax Effects */}
-      <DashboardParallaxSection
-        className="pt-20 pb-8"
-        backgroundPattern="dots"
-        speed={0.1}
+    <ProcessingProvider>
+      <div
+        className={`min-h-screen bg-dashboard-bg-primary transition-opacity duration-300 ${
+          showDashboard ? "opacity-100" : "opacity-0"
+        }`}
       >
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          {/* Enhanced Welcome Section with Parallax */}
-          <DashboardParallaxItem direction="up" distance={30} delay={0.1}>
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-dashboard-text-primary flex items-center">
-                    👋 Hello,{" "}
-                    {user?.firstName || user?.email?.split("@")[0] || "User"}!
-                  </h1>
-                  <p className="text-dashboard-text-secondary mt-1">
-                    Plan:{" "}
-                    <span className="text-dashboard-text-accent font-medium">
-                      {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}{" "}
-                      Plan
-                    </span>
-                  </p>
-                </div>
+        {/* Flat Design Dashboard Header */}
+        <DashboardHeader
+          title="SharpFlow"
+          subtitle="Lead Generation System"
+          showNotifications={true}
+        />
+
+        {/* Main Dashboard Content - Flat Design */}
+        <main className="pt-20 pb-8 max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Apple-Inspired Welcome Section */}
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-apple-title text-dashboard-text-primary flex items-center">
+                  👋 Hello,{" "}
+                  {user?.firstName || user?.email?.split("@")[0] || "User"}!
+                </h1>
               </div>
             </div>
-          </DashboardParallaxItem>
+          </div>
 
-          {/* Enhanced Navigation Tabs */}
-          <DashboardParallaxItem direction="up" distance={20} delay={0.4}>
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="space-y-6"
-            >
-              <TabsList className="grid w-full grid-cols-6 bg-dashboard-bg-tertiary backdrop-blur-sm border border-dashboard-border-primary">
-                <TabsTrigger
-                  value="leads"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Leads
-                </TabsTrigger>
-                <TabsTrigger
-                  value="reports"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Reports
-                </TabsTrigger>
-                <TabsTrigger
-                  value="bot-config"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <Bot className="h-4 w-4 mr-2" />
-                  Bot Config
-                </TabsTrigger>
-                <TabsTrigger
-                  value="security"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Security
-                </TabsTrigger>
-                <TabsTrigger
-                  value="telegram"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Telegram
-                </TabsTrigger>
-                <TabsTrigger
-                  value="billing"
-                  className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-colors"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Billing
-                </TabsTrigger>
-              </TabsList>
+          {/* Flat Design Navigation Tabs */}
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
+            <TabsList className="grid w-full grid-cols-5 bg-flat-surface border border-dashboard-border-primary shadow-flat-subtle">
+              <TabsTrigger
+                value="leads"
+                className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-all duration-200"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Leads
+              </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-all duration-200"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Reports
+              </TabsTrigger>
 
-              {/* Leads Tab - Clean Lead Generation Dashboard */}
-              <TabsContent value="leads" className="space-y-6">
-                <LeadGenerationDashboard
-                  userPlan={userPlan}
-                  className="space-y-8"
-                />
-              </TabsContent>
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-all duration-200"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger
+                value="ai-agents"
+                className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-all duration-200"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                AI Agents
+              </TabsTrigger>
 
-              {/* Reports Tab - Research Reports Section */}
-              <TabsContent value="reports" className="space-y-6">
-                <ReportsSection />
-              </TabsContent>
+              <TabsTrigger
+                value="billing"
+                className="data-[state=active]:bg-dashboard-secondary data-[state=active]:text-dashboard-bg-primary text-dashboard-text-secondary hover:text-dashboard-text-primary transition-all duration-200"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Billing
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Bot Configuration Tab */}
-              <TabsContent value="bot-config" className="space-y-6">
-                <MultiBotConfigTab />
-              </TabsContent>
+            {/* Leads Tab - Clean Lead Generation Dashboard */}
+            <TabsContent value="leads" className="space-y-6">
+              <LeadGenerationDashboard
+                userPlan={userPlan}
+                className="space-y-8"
+              />
+            </TabsContent>
 
-              {/* Security & Data Isolation Tab */}
-              <TabsContent value="security" className="space-y-6">
-                <DataIsolationStatus />
-              </TabsContent>
+            {/* Reports Tab - Research Reports Section */}
+            <TabsContent value="reports" className="space-y-6">
+              <ReportsSection />
+            </TabsContent>
 
-              {/* Telegram Configuration Tab */}
-              <TabsContent value="telegram" className="space-y-6">
-                <TelegramSettings />
-              </TabsContent>
+            {/* Security & Data Isolation Tab */}
+            <TabsContent value="security" className="space-y-6">
+              <DataIsolationStatus />
+            </TabsContent>
 
-              {/* Billing Tab */}
-              <TabsContent value="billing" className="space-y-6">
-                <h2 className="text-2xl font-bold text-white">
-                  Billing & Account Management
-                </h2>
+            {/* AI Agents Tab */}
+            <TabsContent value="ai-agents" className="space-y-6">
+              <div className="h-[calc(100vh-280px)]">
+                <AgentChat />
+              </div>
+            </TabsContent>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Current Plan */}
-                  <Card className="bg-black/20 backdrop-blur-sm border-white/10">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center justify-between">
-                        <span className="flex items-center">
-                          <CreditCard className="h-5 w-5 mr-2 text-[#C1FF72]" />
-                          Current Plan
-                        </span>
-                        <Badge className="bg-[#C1FF72]/20 text-[#C1FF72]">
-                          {subscriptionData?.subscriptionPlan || "Professional"}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-white/80">
-                          <span>Plan:</span>
-                          <span className="text-white">
-                            {subscriptionData?.subscriptionPlan ||
-                              "Professional"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-white/80">
-                          <span>Billing Cycle:</span>
-                          <span className="text-white">Monthly</span>
-                        </div>
-                        <div className="flex justify-between text-white/80">
-                          <span>Next Billing:</span>
-                          <span className="text-white">
-                            {subscriptionData?.subscriptionPeriodEnd
-                              ? new Date(
-                                  subscriptionData.subscriptionPeriodEnd
-                                ).toLocaleDateString()
-                              : "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="pt-4 space-y-2">
-                        <Button className="w-full bg-[#38B6FF] text-white hover:bg-[#2A9FE8]">
-                          Upgrade Plan
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full border-white/20 text-white hover:bg-white/10"
-                        >
-                          Change Billing Cycle
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+            {/* Billing Tab - Flat Design */}
+            <TabsContent value="billing" className="space-y-6">
+              <h2 className="text-apple-title text-dashboard-text-primary">
+                Billing & Account Management
+              </h2>
 
-                  {/* Payment History */}
-                  <Card className="bg-black/20 backdrop-blur-sm border-white/10">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center justify-between">
-                        <span className="flex items-center">
-                          <DollarSign className="h-5 w-5 mr-2 text-[#38B6FF]" />
-                          Payment History
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-white/20 text-white hover:bg-white/10"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Export
-                        </Button>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                          <div>
-                            <p className="text-white font-medium">
-                              Professional Plan
-                            </p>
-                            <p className="text-white/60 text-sm">
-                              Dec 24, 2024
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white font-medium">$49.99</p>
-                            <Badge className="bg-green-500/20 text-green-400 text-xs">
-                              Paid
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                          <div>
-                            <p className="text-white font-medium">
-                              Professional Plan
-                            </p>
-                            <p className="text-white/60 text-sm">
-                              Nov 24, 2024
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white font-medium">$49.99</p>
-                            <Badge className="bg-green-500/20 text-green-400 text-xs">
-                              Paid
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Payment Method */}
-                <Card className="bg-black/20 backdrop-blur-sm border-white/10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Current Plan */}
+                <Card className="bg-flat-surface border-dashboard-border-primary shadow-flat-card">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center">
-                      <CreditCard className="h-5 w-5 mr-2 text-purple-400" />
-                      Payment Method
+                    <CardTitle className="text-dashboard-text-primary flex items-center justify-between">
+                      <span className="flex items-center">
+                        <CreditCard className="h-5 w-5 mr-2 text-[#C1FF72]" />
+                        Current Plan
+                      </span>
+                      <Badge className="bg-[#C1FF72]/10 text-[#C1FF72] border border-[#C1FF72]/20">
+                        {subscriptionData?.subscriptionPlan || "Professional"}
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-500/20 rounded">
-                          <CreditCard className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">PayPal</p>
-                          <p className="text-white/60 text-sm">
-                            Connected account
-                          </p>
-                        </div>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-dashboard-text-secondary">
+                        <span>Plan:</span>
+                        <span className="text-dashboard-text-primary">
+                          {subscriptionData?.subscriptionPlan || "Professional"}
+                        </span>
                       </div>
+                      <div className="flex justify-between text-dashboard-text-secondary">
+                        <span>Billing Cycle:</span>
+                        <span className="text-dashboard-text-primary">
+                          Monthly
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-dashboard-text-secondary">
+                        <span>Next Billing:</span>
+                        <span className="text-dashboard-text-primary">
+                          {subscriptionData?.subscriptionPeriodEnd
+                            ? new Date(
+                                subscriptionData.subscriptionPeriodEnd
+                              ).toLocaleDateString()
+                            : "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="pt-4 space-y-2">
+                      <Button className="w-full bg-[#38B6FF] text-white hover:bg-[#38B6FF]/90 shadow-flat-subtle">
+                        Upgrade Plan
+                      </Button>
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="w-full border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-bg-accent shadow-flat-subtle"
                       >
-                        Update
+                        Change Billing Cycle
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-          </DashboardParallaxItem>
+
+                {/* Payment History */}
+                <Card className="bg-flat-surface border-dashboard-border-primary shadow-flat-card">
+                  <CardHeader>
+                    <CardTitle className="text-dashboard-text-primary flex items-center justify-between">
+                      <span className="flex items-center">
+                        <DollarSign className="h-5 w-5 mr-2 text-[#38B6FF]" />
+                        Payment History
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-bg-accent shadow-flat-subtle"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Export
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-dashboard-bg-tertiary/50 rounded-lg border border-dashboard-border-primary/30">
+                        <div>
+                          <p className="text-dashboard-text-primary font-medium">
+                            Professional Plan
+                          </p>
+                          <p className="text-dashboard-text-secondary text-sm">
+                            Dec 24, 2024
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-dashboard-text-primary font-medium">
+                            $49.99
+                          </p>
+                          <Badge className="bg-green-500/10 text-green-400 text-xs border border-green-500/20">
+                            Paid
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-dashboard-bg-tertiary/50 rounded-lg border border-dashboard-border-primary/30">
+                        <div>
+                          <p className="text-dashboard-text-primary font-medium">
+                            Professional Plan
+                          </p>
+                          <p className="text-dashboard-text-secondary text-sm">
+                            Nov 24, 2024
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-dashboard-text-primary font-medium">
+                            $49.99
+                          </p>
+                          <Badge className="bg-green-500/10 text-green-400 text-xs border border-green-500/20">
+                            Paid
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Method */}
+              <Card className="bg-flat-surface border-dashboard-border-primary shadow-flat-card">
+                <CardHeader>
+                  <CardTitle className="text-dashboard-text-primary flex items-center">
+                    <CreditCard className="h-5 w-5 mr-2 text-purple-400" />
+                    Payment Method
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between p-4 bg-dashboard-bg-tertiary/50 rounded-lg border border-dashboard-border-primary/30">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-500/10 rounded border border-blue-500/20">
+                        <CreditCard className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-dashboard-text-primary font-medium">
+                          PayPal
+                        </p>
+                        <p className="text-dashboard-text-secondary text-sm">
+                          Connected account
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-bg-accent shadow-flat-subtle"
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </main>
-      </DashboardParallaxSection>
-    </div>
+      </div>
+    </ProcessingProvider>
   );
 }

@@ -12,7 +12,8 @@ router.get("/", isAuthenticated, async (req, res) => {
     // Get user profile data
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select(`
+      .select(
+        `
         id,
         email,
         first_name,
@@ -21,7 +22,8 @@ router.get("/", isAuthenticated, async (req, res) => {
         subscription_status,
         subscription_plan,
         created_at
-      `)
+      `
+      )
       .eq("id", userId)
       .single();
 
@@ -39,7 +41,7 @@ router.get("/", isAuthenticated, async (req, res) => {
 
     // Get notification preferences
     const { data: notificationPrefs } = await supabase
-      .from("telegram_preferences")
+      .from("notification_preferences")
       .select("*")
       .eq("user_id", userId)
       .single();
@@ -120,17 +122,20 @@ router.patch("/", isAuthenticated, async (req, res) => {
     if (settings.preferences) {
       const { error: prefsError } = await supabase
         .from("user_preferences")
-        .upsert({
-          user_id: userId,
-          theme: settings.preferences.theme,
-          language: settings.preferences.language,
-          timezone: settings.preferences.timezone,
-          layout: settings.preferences.layout,
-          default_time_range: settings.preferences.defaultTimeRange,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: "user_id"
-        });
+        .upsert(
+          {
+            user_id: userId,
+            theme: settings.preferences.theme,
+            language: settings.preferences.language,
+            timezone: settings.preferences.timezone,
+            layout: settings.preferences.layout,
+            default_time_range: settings.preferences.defaultTimeRange,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
       if (prefsError) {
         console.error("Error updating preferences:", prefsError);
@@ -141,23 +146,28 @@ router.patch("/", isAuthenticated, async (req, res) => {
     // Update notification preferences if provided
     if (settings.notifications) {
       const { error: notifError } = await supabase
-        .from("telegram_preferences")
-        .upsert({
-          user_id: userId,
-          system_announcements: settings.notifications.email.systemUpdates,
-          job_failed: settings.notifications.email.automationAlerts,
-          daily_summary: settings.notifications.email.weeklyReports,
-          lead_generation_complete: true,
-          research_report_complete: true,
-          plan_limit_reached: true,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: "user_id"
-        });
+        .from("notification_preferences")
+        .upsert(
+          {
+            user_id: userId,
+            system_announcements: settings.notifications.email.systemUpdates,
+            job_failed: settings.notifications.email.automationAlerts,
+            daily_summary: settings.notifications.email.weeklyReports,
+            lead_generation_complete: true,
+            research_report_complete: true,
+            plan_limit_reached: true,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
       if (notifError) {
         console.error("Error updating notifications:", notifError);
-        return res.status(500).json({ error: "Failed to update notifications" });
+        return res
+          .status(500)
+          .json({ error: "Failed to update notifications" });
       }
     }
 

@@ -1,0 +1,273 @@
+# ============================================================================
+# SharpFlow CD Pipeline - Continuous Deployment
+# Automated deployment to staging and production environments
+# ============================================================================
+
+name: 🚀 Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Build & Push Docker Image
+  # ============================================================================
+  build-and-push:
+    name: 🏗️ Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ============================================================================
+  # Deploy to Staging
+  # ============================================================================
+  deploy-staging:
+    name: 🎭 Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.sharpflow.app
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to staging
+        run: |
+          echo "🎭 Deploying to staging environment..."
+          echo "📦 Image: ${{ needs.build-and-push.outputs.image-tag }}"
+          
+          # Create deployment configuration
+          cat > docker-compose.staging.yml << EOF
+          version: '3.8'
+          services:
+            sharpflow-app:
+              image: ${{ needs.build-and-push.outputs.image-tag }}
+              container_name: sharpflow-staging
+              ports:
+                - "3001:3000"
+              environment:
+                - NODE_ENV=staging
+                - PORT=3000
+                - SUPABASE_URL=\${{ secrets.STAGING_SUPABASE_URL }}
+                - SUPABASE_SERVICE_ROLE_KEY=\${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+                - SUPABASE_ANON_KEY=\${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+                - DATABASE_URL=\${{ secrets.STAGING_DATABASE_URL }}
+                - JWT_SECRET=\${{ secrets.STAGING_JWT_SECRET }}
+                - OPENAI_API_KEY=\${{ secrets.STAGING_OPENAI_API_KEY }}
+                - REDIS_URL=redis://redis:6379
+              depends_on:
+                - redis
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+            
+            redis:
+              image: redis:7-alpine
+              container_name: sharpflow-redis-staging
+              command: redis-server --appendonly yes
+              restart: unless-stopped
+          EOF
+
+      - name: 🟢 Setup Node.js for verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔍 Comprehensive health check
+        run: |
+          echo "🔍 Performing comprehensive health check..."
+          node scripts/health-check.js http://localhost:3001 --json
+
+      - name: 🧪 Run deployment verification
+        run: |
+          echo "🧪 Running deployment verification on staging..."
+          node scripts/deployment-verification.js http://localhost:3001 --json
+
+  # ============================================================================
+  # Deploy to Production
+  # ============================================================================
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [build-and-push, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://sharpflow.app
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🌟 Deploy to production
+        run: |
+          echo "🌟 Deploying to production environment..."
+          echo "📦 Image: ${{ needs.build-and-push.outputs.image-tag }}"
+          
+          # Create production deployment configuration
+          cat > docker-compose.production.yml << EOF
+          version: '3.8'
+          services:
+            sharpflow-app:
+              image: ${{ needs.build-and-push.outputs.image-tag }}
+              container_name: sharpflow-production
+              ports:
+                - "3000:3000"
+              environment:
+                - NODE_ENV=production
+                - PORT=3000
+                - SUPABASE_URL=\${{ secrets.PROD_SUPABASE_URL }}
+                - SUPABASE_SERVICE_ROLE_KEY=\${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+                - SUPABASE_ANON_KEY=\${{ secrets.PROD_SUPABASE_ANON_KEY }}
+                - DATABASE_URL=\${{ secrets.PROD_DATABASE_URL }}
+                - JWT_SECRET=\${{ secrets.PROD_JWT_SECRET }}
+                - OPENAI_API_KEY=\${{ secrets.PROD_OPENAI_API_KEY }}
+                - PERPLEXITY_API_KEY=\${{ secrets.PROD_PERPLEXITY_API_KEY }}
+                - APIFY_TOKEN=\${{ secrets.PROD_APIFY_TOKEN }}
+                - PAYPAL_CLIENT_ID=\${{ secrets.PROD_PAYPAL_CLIENT_ID }}
+                - PAYPAL_CLIENT_SECRET=\${{ secrets.PROD_PAYPAL_CLIENT_SECRET }}
+                - PAYPAL_ENVIRONMENT=live
+                - REDIS_URL=redis://redis:6379
+              deploy:
+                resources:
+                  limits:
+                    memory: 1G
+                    cpus: '0.5'
+                  reservations:
+                    memory: 512M
+                    cpus: '0.25'
+              depends_on:
+                - redis
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+            
+            redis:
+              image: redis:7-alpine
+              container_name: sharpflow-redis-production
+              command: redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+              deploy:
+                resources:
+                  limits:
+                    memory: 256M
+                    cpus: '0.25'
+                  reservations:
+                    memory: 128M
+                    cpus: '0.1'
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 30s
+                timeout: 5s
+                retries: 3
+          EOF
+
+      - name: 🟢 Setup Node.js for verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔍 Production health check
+        run: |
+          echo "🔍 Performing production health check..."
+          node scripts/health-check.js http://localhost:3000 --json
+
+      - name: 📊 Post-deployment verification
+        run: |
+          echo "📊 Running comprehensive post-deployment verification..."
+          node scripts/deployment-verification.js http://localhost:3000 --json
+
+  # ============================================================================
+  # Deployment Notification
+  # ============================================================================
+  notify:
+    name: 📢 Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+
+    steps:
+      - name: 📢 Send deployment notification
+        run: |
+          if [[ "${{ needs.deploy-staging.result }}" == "success" ]]; then
+            echo "✅ Staging deployment successful!"
+          fi
+          
+          if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
+            echo "✅ Production deployment successful!"
+          fi
+          
+          echo "🚀 Deployment pipeline completed!"

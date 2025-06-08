@@ -4,6 +4,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memorystore from "memorystore";
 import { storage } from "./storage";
+import { setOwnerAuthenticationStatus } from "./middleware/ownerAuth.js";
 
 // Create a memory store for sessions (for development only)
 const MemoryStore = memorystore(session);
@@ -77,12 +78,27 @@ export async function setupAuth(app: Express) {
 
   // Google OAuth Strategy
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    // Determine the base URL dynamically
+    const port = process.env.PORT || 3000;
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.PRODUCTION_URL || `https://your-domain.com`
+        : `http://localhost:${port}`;
+
+    console.log("🔍 Google OAuth Configuration:", {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      callbackURL: `${baseUrl}/api/auth/google/callback`,
+      baseUrl,
+      port,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
     passport.use(
       new GoogleStrategy(
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
+          callbackURL: `${baseUrl}/api/auth/google/callback`,
         },
         async (accessToken, refreshToken, profile, done) => {
           try {
@@ -150,6 +166,11 @@ export async function setupAuth(app: Express) {
         console.log("🔐 Session ID:", req.sessionID);
         console.log("🔐 Is Authenticated:", req.isAuthenticated());
 
+        // Check if this is the owner email
+        const ownerEmail = process.env.OWNER_EMAIL || "shajith240@gmail.com";
+        const isOwnerEmail =
+          req.user?.email?.toLowerCase() === ownerEmail.toLowerCase();
+
         // Save session explicitly
         req.session.save((err: any) => {
           if (err) {
@@ -158,8 +179,22 @@ export async function setupAuth(app: Express) {
             console.log("✅ Session saved successfully");
           }
 
-          // Redirect to dashboard after successful authentication
-          res.redirect("/dashboard");
+          // Redirect based on user type
+          if (isOwnerEmail) {
+            console.log(
+              `👑 Owner ${req.user.email} authenticated via Google OAuth - redirecting to sign-in for secret key`
+            );
+            // Redirect to sign-in with a special parameter to show owner fields
+            res.redirect(
+              "/sign-in?owner=true&message=Please enter your secret key to access the Owner Dashboard"
+            );
+          } else {
+            console.log(
+              `👤 User ${req.user.email} authenticated via Google OAuth - redirecting to user dashboard`
+            );
+            // Redirect to dashboard after successful authentication
+            res.redirect("/dashboard");
+          }
         });
       }
     );
@@ -262,11 +297,30 @@ export async function setupAuth(app: Express) {
 
   app.post("/api/auth/signin", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, ownerSecretKey } = req.body;
 
       // Basic validation
       if (!email || !password) {
         return res.status(400).json({ message: "Missing email or password" });
+      }
+
+      // Check for owner authentication
+      const ownerEmail = process.env.OWNER_EMAIL || "shajith240@gmail.com";
+      const expectedSecretKey = process.env.ENCRYPTION_KEY;
+      const isOwnerEmail = email.toLowerCase() === ownerEmail.toLowerCase();
+
+      let isOwnerAuthentication = false;
+
+      // If this is the owner email and secret key is provided, validate it
+      if (isOwnerEmail && ownerSecretKey) {
+        if (ownerSecretKey === expectedSecretKey) {
+          isOwnerAuthentication = true;
+          console.log("🔐 Owner authentication successful");
+        } else {
+          return res.status(401).json({
+            message: "Invalid owner secret key",
+          });
+        }
       }
 
       // Find user by email
@@ -278,7 +332,31 @@ export async function setupAuth(app: Express) {
       // In a real app, you would verify the password hash here
       // For demo purposes, we'll just log them in
       req.login(user, () => {
-        res.json({ success: true, user });
+        // Store owner authentication status in session
+        setOwnerAuthenticationStatus(req as any, isOwnerAuthentication);
+
+        const response: any = {
+          success: true,
+          user,
+          isOwner: isOwnerAuthentication,
+          redirectToOwnerDashboard: isOwnerAuthentication,
+        };
+
+        if (isOwnerAuthentication) {
+          console.log(
+            `👑 Owner ${email} authenticated with secret key - redirecting to owner dashboard`
+          );
+        } else if (isOwnerEmail) {
+          console.log(
+            `👤 Owner ${email} authenticated as regular user - redirecting to user dashboard`
+          );
+        } else {
+          console.log(
+            `👤 User ${email} authenticated - redirecting to user dashboard`
+          );
+        }
+
+        res.json(response);
       });
     } catch (error) {
       console.error("Signin error:", error);

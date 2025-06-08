@@ -307,6 +307,32 @@ export class WebSocketManager {
     instance.userConnections.clear();
   }
 
+  // Method to send job completion notifications
+  static sendJobCompletionNotification(
+    userId: string,
+    notification: {
+      id: string;
+      title: string;
+      message: string;
+      agentName: string;
+      jobId: string;
+      jobType: string;
+      type: string;
+      createdAt: string;
+    }
+  ) {
+    console.log(`🔔 Sending job completion notification to user ${userId}:`, {
+      title: notification.title,
+      agentName: notification.agentName,
+      jobType: notification.jobType,
+    });
+
+    WebSocketManager.broadcastToUser(userId, {
+      type: "job_completion_notification",
+      data: notification,
+    });
+  }
+
   // Method to send system notifications
   static sendSystemNotification(
     message: string,

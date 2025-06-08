@@ -26,13 +26,13 @@ interface DashboardCardProps {
 const getCardStyles = (variant: DashboardCardProps["variant"]) => {
   switch (variant) {
     case "elevated":
-      return "bg-dashboard-surface-elevated border-dashboard-border-secondary shadow-lg";
+      return "bg-flat-elevated border-dashboard-border-primary shadow-flat-elevated";
     case "glass":
-      return "bg-dashboard-surface-glass backdrop-blur-md border-dashboard-border-primary/30 shadow-lg";
+      return "bg-flat-surface border-dashboard-border-primary/50 shadow-flat-card";
     case "gradient":
-      return "bg-gradient-to-br from-dashboard-bg-tertiary to-dashboard-bg-accent border-dashboard-border-primary shadow-lg";
+      return "bg-flat-surface border-dashboard-border-primary shadow-flat-card";
     default:
-      return "bg-dashboard-bg-tertiary border-dashboard-border-primary shadow-md";
+      return "bg-flat-surface border-dashboard-border-primary shadow-flat-card";
   }
 };
 
@@ -79,12 +79,13 @@ export function DashboardCard({
   }
 
   return (
-    <div className="h-full apple-transition-fast">
+    <div className="h-full transition-all duration-200">
       <Card
         className={cn(
           cardStyles,
-          "h-full apple-transition-fast focus:outline-none focus:ring-0 focus:border-inherit",
-          hover && "hover:border-dashboard-primary/50",
+          "h-full transition-all duration-200 focus:outline-none focus:ring-0 focus:border-inherit",
+          hover &&
+            "hover:border-dashboard-primary/50 hover:shadow-flat-elevated",
           className
         )}
         {...props}
@@ -94,12 +95,12 @@ export function DashboardCard({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {title && (
-                  <CardTitle className="text-dashboard-text-primary text-lg font-semibold mb-1">
+                  <CardTitle className="text-apple-subtitle text-dashboard-text-primary mb-1">
                     {title}
                   </CardTitle>
                 )}
                 {description && (
-                  <CardDescription className="text-dashboard-text-secondary text-sm">
+                  <CardDescription className="text-apple-body text-dashboard-text-secondary">
                     {description}
                   </CardDescription>
                 )}
@@ -157,17 +158,17 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <DashboardCard
-      variant="elevated"
+      variant="default"
       hover={true}
       delay={delay}
       className={className}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-dashboard-text-secondary text-sm font-medium mb-1">
+          <p className="text-apple-caption text-dashboard-text-secondary mb-1">
             {title}
           </p>
-          <p className="text-dashboard-text-primary text-2xl font-bold mb-2">
+          <p className="text-apple-title text-dashboard-text-primary mb-2">
             {typeof value === "number" ? value.toLocaleString() : value}
           </p>
           {change && (

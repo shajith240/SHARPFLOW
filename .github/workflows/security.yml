@@ -1,0 +1,267 @@
+# ============================================================================
+# SharpFlow Security Pipeline - Vulnerability Scanning & Security Checks
+# Automated security scanning for dependencies, code, and containers
+# ============================================================================
+
+name: 🔒 Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Dependency Vulnerability Scanning
+  # ============================================================================
+  dependency-scan:
+    name: 🔍 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run npm audit
+        run: |
+          echo "🔍 Running npm audit..."
+          npm audit --audit-level=moderate --json > audit-results.json || true
+          
+          # Check if there are any vulnerabilities
+          if [ -s audit-results.json ]; then
+            echo "⚠️ Vulnerabilities found:"
+            cat audit-results.json
+            
+            # Count vulnerabilities by severity
+            high_vulns=$(cat audit-results.json | jq '.metadata.vulnerabilities.high // 0')
+            critical_vulns=$(cat audit-results.json | jq '.metadata.vulnerabilities.critical // 0')
+            
+            echo "📊 Vulnerability Summary:"
+            echo "  Critical: $critical_vulns"
+            echo "  High: $high_vulns"
+            
+            # Fail if critical or high vulnerabilities found
+            if [ "$critical_vulns" -gt 0 ] || [ "$high_vulns" -gt 0 ]; then
+              echo "❌ Critical or high severity vulnerabilities found!"
+              exit 1
+            fi
+          else
+            echo "✅ No vulnerabilities found!"
+          fi
+
+      - name: 📊 Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-audit-results
+          path: audit-results.json
+
+  # ============================================================================
+  # CodeQL Security Analysis
+  # ============================================================================
+  codeql-analysis:
+    name: 🔬 CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'typescript' ]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔬 Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: 🏗️ Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: 🔬 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # ============================================================================
+  # Secret Scanning
+  # ============================================================================
+  secret-scan:
+    name: 🔐 Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔐 Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # ============================================================================
+  # Container Security Scanning
+  # ============================================================================
+  container-scan:
+    name: 🐳 Container Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: false
+          tags: sharpflow:security-scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🔒 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: sharpflow:security-scan
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 🔒 Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+
+      - name: 📊 Upload filesystem scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
+  # ============================================================================
+  # License Compliance Check
+  # ============================================================================
+  license-check:
+    name: 📄 License Compliance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 📄 Install license checker
+        run: npm install -g license-checker
+
+      - name: 📄 Check licenses
+        run: |
+          echo "📄 Checking package licenses..."
+          license-checker --json --out licenses.json
+          
+          # Check for problematic licenses
+          problematic_licenses=("GPL-2.0" "GPL-3.0" "AGPL-1.0" "AGPL-3.0")
+          
+          for license in "${problematic_licenses[@]}"; do
+            if grep -q "$license" licenses.json; then
+              echo "⚠️ Found potentially problematic license: $license"
+              grep "$license" licenses.json
+            fi
+          done
+          
+          echo "✅ License check completed!"
+
+      - name: 📊 Upload license report
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-report
+          path: licenses.json
+
+  # ============================================================================
+  # Security Summary
+  # ============================================================================
+  security-summary:
+    name: 📋 Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, codeql-analysis, secret-scan, container-scan, license-check]
+    if: always()
+
+    steps:
+      - name: 📋 Generate security summary
+        run: |
+          echo "🔒 Security Scan Summary"
+          echo "======================="
+          echo ""
+          echo "📊 Scan Results:"
+          echo "  Dependency Scan: ${{ needs.dependency-scan.result }}"
+          echo "  CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
+          echo "  Secret Scan: ${{ needs.secret-scan.result }}"
+          echo "  Container Scan: ${{ needs.container-scan.result }}"
+          echo "  License Check: ${{ needs.license-check.result }}"
+          echo ""
+          
+          if [[ "${{ needs.dependency-scan.result }}" == "success" && 
+                "${{ needs.codeql-analysis.result }}" == "success" && 
+                "${{ needs.secret-scan.result }}" == "success" && 
+                ("${{ needs.container-scan.result }}" == "success" || "${{ needs.container-scan.result }}" == "skipped") && 
+                "${{ needs.license-check.result }}" == "success" ]]; then
+            echo "✅ All security checks passed!"
+          else
+            echo "⚠️ Some security checks failed or found issues."
+            echo "Please review the scan results and address any findings."
+          fi

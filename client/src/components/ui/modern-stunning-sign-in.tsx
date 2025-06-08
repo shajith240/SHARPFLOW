@@ -8,8 +8,39 @@ import { validateEmail } from "@/lib/utils";
 const SignIn1 = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [secretKey, setSecretKey] = React.useState("");
+  const [showOwnerFields, setShowOwnerFields] = React.useState(false);
   const [error, setError] = React.useState("");
   const [, setLocation] = useLocation();
+
+  // Check URL parameters and handle owner authentication
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isOwnerParam = urlParams.get("owner");
+    const messageParam = urlParams.get("message");
+
+    // If coming from Google OAuth as owner, pre-fill email and show message
+    if (isOwnerParam === "true") {
+      const ownerEmail = "shajith240@gmail.com";
+      setEmail(ownerEmail);
+      setShowOwnerFields(true);
+
+      if (messageParam) {
+        setError(decodeURIComponent(messageParam));
+        // Clear the error after 5 seconds
+        setTimeout(() => setError(""), 5000);
+      }
+    }
+  }, []);
+
+  // Check if email is owner email to show secret key field
+  React.useEffect(() => {
+    const ownerEmail = "shajith240@gmail.com";
+    setShowOwnerFields(email.toLowerCase() === ownerEmail.toLowerCase());
+    if (email.toLowerCase() !== ownerEmail.toLowerCase()) {
+      setSecretKey(""); // Clear secret key if not owner email
+    }
+  }, [email]);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -23,17 +54,32 @@ const SignIn1 = () => {
     setError("");
 
     try {
+      // Prepare request body with optional secret key for owner authentication
+      const requestBody: any = { email, password };
+
+      // If owner email and secret key provided, include for owner authentication
+      if (showOwnerFields && secretKey) {
+        requestBody.ownerSecretKey = secretKey;
+      }
+
       const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        setLocation("/");
+        const data = await response.json();
+
+        // Check if this is owner authentication with valid secret key
+        if (data.isOwner && data.redirectToOwnerDashboard) {
+          setLocation("/owner/dashboard");
+        } else {
+          setLocation("/dashboard");
+        }
       } else {
         const data = await response.json();
         setError(data.message || "Sign in failed");
@@ -85,6 +131,40 @@ const SignIn1 = () => {
               className="w-full px-5 py-3 rounded-xl bg-white/10 text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               onChange={(e) => setPassword(e.target.value)}
             />
+
+            {/* Owner Secret Key Field - Only shown for owner email */}
+            {showOwnerFields && (
+              <div className="space-y-3 p-4 rounded-xl bg-gradient-to-r from-[#C1FF72]/5 to-[#38B6FF]/5 border border-[#C1FF72]/20">
+                <div className="flex items-center gap-2 text-[#C1FF72] text-sm font-medium">
+                  <span className="text-lg">👑</span>
+                  Owner Authentication Detected
+                </div>
+                <input
+                  placeholder="Enter your secret key to access Owner Dashboard"
+                  type="password"
+                  value={secretKey}
+                  className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-[#C1FF72]/10 to-[#38B6FF]/10 text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#C1FF72] border border-[#C1FF72]/30"
+                  onChange={(e) => setSecretKey(e.target.value)}
+                />
+                <div className="text-xs text-gray-400 text-left">
+                  <div className="flex items-start gap-2">
+                    <span>🔐</span>
+                    <div>
+                      <p className="text-[#C1FF72]">With secret key:</p>
+                      <p>
+                        → Access Owner Dashboard (customer management, setup
+                        workflow)
+                      </p>
+                      <p className="text-gray-500 mt-1">Without secret key:</p>
+                      <p className="text-gray-500">
+                        → Access regular User Dashboard
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="text-sm text-red-400 text-left">{error}</div>
             )}

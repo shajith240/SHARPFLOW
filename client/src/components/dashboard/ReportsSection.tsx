@@ -50,12 +50,33 @@ import {
 
 interface Report {
   id: string;
-  lead_name: string;
-  linkedin_url: string;
+  report_title: string;
   report_content: string;
+  report_type: string;
   created_at: string;
   user_id: string;
+  // Derived fields from report_title
+  lead_name?: string;
+  linkedin_url?: string;
 }
+
+// Helper function to extract lead name from report title
+const extractLeadNameFromTitle = (title: string): string => {
+  if (!title) return "Unknown";
+  // Extract name from "Research Report - [Name]" format
+  const match = title.match(/Research Report - (.+)/);
+  return match ? match[1].trim() : title;
+};
+
+// Helper function to extract LinkedIn URL from report content
+const extractLinkedInUrlFromContent = (content: string): string => {
+  if (!content) return "";
+  // Look for LinkedIn URLs in the content
+  const linkedinUrlMatch = content.match(
+    /https:\/\/(?:www\.)?linkedin\.com\/in\/[^\s"<>]+/
+  );
+  return linkedinUrlMatch ? linkedinUrlMatch[0] : "";
+};
 
 export function ReportsSection() {
   const { user } = useAuth();
@@ -82,7 +103,13 @@ export function ReportsSection() {
 
       if (response.ok) {
         const data = await response.json();
-        setReports(data.reports || []);
+        // Process reports to extract lead names from report titles
+        const processedReports = (data.reports || []).map((report: any) => ({
+          ...report,
+          lead_name: extractLeadNameFromTitle(report.report_title),
+          linkedin_url: extractLinkedInUrlFromContent(report.report_content),
+        }));
+        setReports(processedReports);
       } else {
         const errorData = await response.text();
         console.error(
@@ -99,9 +126,14 @@ export function ReportsSection() {
     }
   };
 
-  const filteredReports = reports.filter((report) =>
-    report.lead_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredReports = reports.filter((report) => {
+    const searchableText = (
+      report.lead_name ||
+      report.report_title ||
+      ""
+    ).toLowerCase();
+    return searchableText.includes(searchTerm.toLowerCase());
+  });
 
   const truncateText = (text: string, maxLength: number = 30) => {
     if (!text) return "-";
@@ -120,6 +152,16 @@ export function ReportsSection() {
   };
 
   const handleViewReport = (report: Report) => {
+    // Debug logging for report content
+    console.log("🔍 DEBUG - handleViewReport called with:", {
+      reportId: report.id,
+      leadName: report.lead_name,
+      contentLength: report.report_content?.length || 0,
+      contentPreview: report.report_content?.substring(0, 100) || "No content",
+      hasContent: !!report.report_content,
+      fullReport: report,
+    });
+
     // Open the HTML report in a new tab
     const newWindow = window.open("", "_blank");
     if (newWindow) {
@@ -129,7 +171,7 @@ export function ReportsSection() {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Research Report - ${report.lead_name}</title>
+          <title>Research Report - ${report.lead_name || "Unknown"}</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -217,12 +259,26 @@ export function ReportsSection() {
         <body>
           <div class="report-header">
             <h1>SharpFlow Research Report</h1>
-            <h2>${report.lead_name}</h2>
+            <h2>${report.lead_name || "Unknown"}</h2>
             <div class="report-date">Generated on ${new Date(
               report.created_at
             ).toLocaleDateString()}</div>
           </div>
-          ${report.report_content}
+          ${
+            report.report_content ||
+            `<div style="text-align: center; padding: 2rem; color: #94a3b8;">
+              <h3>⚠️ No Content Available</h3>
+              <p>This report appears to be empty or the content could not be loaded.</p>
+              <div style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">
+                <p><strong>Debug Info:</strong></p>
+                <p>Report ID: ${report.id}</p>
+                <p>Content Length: ${
+                  report.report_content?.length || 0
+                } characters</p>
+                <p>Has Content: ${!!report.report_content}</p>
+              </div>
+            </div>`
+          }
         </body>
         </html>
       `);
@@ -454,11 +510,14 @@ export function ReportsSection() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="cursor-help">
-                                      {truncateText(report.lead_name, 25)}
+                                      {truncateText(
+                                        report.lead_name || "Unknown",
+                                        25
+                                      )}
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent className="bg-dashboard-bg-tertiary border-dashboard-border-primary text-dashboard-text-primary">
-                                    <p>{report.lead_name}</p>
+                                    <p>{report.lead_name || "Unknown"}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -480,31 +539,40 @@ export function ReportsSection() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <a
-                                    href={report.linkedin_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-dashboard-primary hover:text-dashboard-secondary transition-colors font-medium flex items-center gap-1"
-                                  >
-                                    <Linkedin className="w-3 h-3" />
-                                    {truncateText(report.linkedin_url, 35)}
-                                  </a>
+                                  {report.linkedin_url ? (
+                                    <a
+                                      href={report.linkedin_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-dashboard-primary hover:text-dashboard-secondary transition-colors font-medium flex items-center gap-1"
+                                    >
+                                      <Linkedin className="w-3 h-3" />
+                                      {truncateText(report.linkedin_url, 35)}
+                                    </a>
+                                  ) : (
+                                    <span className="text-dashboard-text-muted flex items-center gap-1">
+                                      <Linkedin className="w-3 h-3" />
+                                      No URL found
+                                    </span>
+                                  )}
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-dashboard-bg-tertiary border-dashboard-border-primary text-dashboard-text-primary">
-                                  <p>{report.linkedin_url}</p>
+                                  <p>{report.linkedin_url || "No URL found"}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() =>
-                                copyToClipboard(report.linkedin_url)
-                              }
-                            >
-                              <Copy className="w-3 h-3" />
-                            </Button>
+                            {report.linkedin_url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() =>
+                                  copyToClipboard(report.linkedin_url!)
+                                }
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
 
@@ -555,24 +623,31 @@ export function ReportsSection() {
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Report
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  copyToClipboard(report.linkedin_url)
-                                }
-                                className="text-dashboard-text-primary hover:bg-dashboard-bg-accent"
-                              >
-                                <Copy className="w-4 h-4 mr-2" />
-                                Copy LinkedIn URL
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  window.open(report.linkedin_url, "_blank")
-                                }
-                                className="text-dashboard-text-primary hover:bg-dashboard-bg-accent"
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Open LinkedIn
-                              </DropdownMenuItem>
+                              {report.linkedin_url && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      copyToClipboard(report.linkedin_url!)
+                                    }
+                                    className="text-dashboard-text-primary hover:bg-dashboard-bg-accent"
+                                  >
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Copy LinkedIn URL
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      window.open(
+                                        report.linkedin_url!,
+                                        "_blank"
+                                      )
+                                    }
+                                    className="text-dashboard-text-primary hover:bg-dashboard-bg-accent"
+                                  >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Open LinkedIn
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                               <DropdownMenuSeparator className="bg-dashboard-border-primary" />
                               <DropdownMenuItem
                                 onClick={() => handleDeleteReport(report.id)}

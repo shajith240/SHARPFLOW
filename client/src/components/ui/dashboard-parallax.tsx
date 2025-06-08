@@ -301,7 +301,7 @@ export function DashboardGlowEffect({
   return (
     <div className={cn("relative", className)} style={animatedGlowStyle}>
       {children}
-      <style jsx>{`
+      <style>{`
         @keyframes dashboard-glow {
           from {
             box-shadow: ${getGlowIntensity()} ${getGlowColor()};

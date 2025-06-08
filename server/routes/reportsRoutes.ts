@@ -28,6 +28,24 @@ router.get("/", isAuthenticated, async (req, res) => {
 
     const { data: reports, error } = await query;
 
+    // Debug logging for report content
+    if (reports && reports.length > 0) {
+      console.log(
+        `🔍 DEBUG - Retrieved ${reports.length} reports from database`
+      );
+      reports.forEach((report, index) => {
+        console.log(`🔍 Report ${index + 1}:`, {
+          id: report.id,
+          lead_name: report.lead_name,
+          report_title: report.report_title,
+          content_length: report.report_content?.length || 0,
+          content_preview:
+            report.report_content?.substring(0, 100) || "No content",
+          has_content: !!report.report_content,
+        });
+      });
+    }
+
     // Get total count separately
     let countQuery = supabase
       .from("research_reports")
@@ -53,42 +71,45 @@ router.get("/", isAuthenticated, async (req, res) => {
     // Get LinkedIn URLs for each report by fetching lead data
     const reportsWithLinkedIn = await Promise.all(
       (reports || []).map(async (report) => {
-        try {
-          const { data: lead, error: leadError } = await supabase
-            .from("leads")
-            .select("linkedin_url")
-            .eq("id", report.lead_id)
-            .single();
+        let linkedinUrl = "";
 
-          if (leadError) {
-            console.warn(`Lead not found for report ${report.id}:`, leadError);
+        // Only try to fetch lead data if lead_id is not null
+        if (report.lead_id && report.lead_id !== "null") {
+          try {
+            const { data: lead, error: leadError } = await supabase
+              .from("leads")
+              .select("linkedin_url")
+              .eq("id", report.lead_id)
+              .single();
+
+            if (leadError) {
+              console.warn(
+                `Lead not found for report ${report.id}:`,
+                leadError
+              );
+            } else {
+              linkedinUrl = lead?.linkedin_url || "";
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching lead for report ${report.id}:`,
+              error
+            );
           }
-
-          return {
-            id: report.id,
-            lead_id: report.lead_id,
-            lead_name: report.lead_name,
-            linkedin_url: lead?.linkedin_url || "",
-            report_content: report.report_html, // Map report_html to report_content for frontend
-            relevance_score: report.relevance_score,
-            created_at: report.created_at,
-            updated_at: report.updated_at,
-            user_id: userId, // Add user_id for frontend compatibility
-          };
-        } catch (error) {
-          console.error(`Error fetching lead for report ${report.id}:`, error);
-          return {
-            id: report.id,
-            lead_id: report.lead_id,
-            lead_name: report.lead_name,
-            linkedin_url: "",
-            report_content: report.report_html,
-            relevance_score: report.relevance_score,
-            created_at: report.created_at,
-            updated_at: report.updated_at,
-            user_id: userId,
-          };
         }
+
+        return {
+          id: report.id,
+          lead_id: report.lead_id,
+          lead_name: report.lead_name,
+          linkedin_url: linkedinUrl,
+          report_content: report.report_content || "", // Use correct database column
+          report_title: report.report_title || "Research Report",
+          relevance_score: report.relevance_score,
+          created_at: report.created_at,
+          updated_at: report.updated_at,
+          user_id: userId, // Add user_id for frontend compatibility
+        };
       })
     );
 
@@ -129,18 +150,27 @@ router.get("/:reportId", isAuthenticated, async (req, res) => {
       return res.status(404).json({ error: "Report not found" });
     }
 
-    // Get lead data for this report
-    const { data: lead } = await supabase
-      .from("leads")
-      .select(
-        "linkedin_url, full_name, company_name, email_address, phone_number"
-      )
-      .eq("id", report.lead_id)
-      .single();
+    // Get lead data for this report (only if lead_id is not null)
+    let lead = null;
+    if (report.lead_id && report.lead_id !== "null") {
+      try {
+        const { data: leadData } = await supabase
+          .from("leads")
+          .select(
+            "linkedin_url, full_name, company_name, email_address, phone_number"
+          )
+          .eq("id", report.lead_id)
+          .single();
+        lead = leadData;
+      } catch (error) {
+        console.warn(`Error fetching lead for report ${report.id}:`, error);
+      }
+    }
 
     res.json({
       ...report,
-      report_content: report.report_html, // Map report_html to report_content for frontend
+      // Ensure report_content is properly mapped for frontend
+      report_content: report.report_content || report.report_html || "",
       linkedin_url: lead?.linkedin_url || "",
       company_name: lead?.company_name || "",
       email_address: lead?.email_address || "",

@@ -11,6 +11,7 @@ import {
   integer,
   json,
   date,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -39,6 +40,7 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status").default("inactive"), // inactive, active, canceled, past_due
   subscriptionPlan: varchar("subscription_plan"), // starter, professional, enterprise
   subscriptionPeriodEnd: timestamp("subscription_period_end"),
+  activationStatus: varchar("activation_status").default("pending"), // pending, active
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -96,11 +98,107 @@ export const webhookEvents = pgTable("webhook_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Leads table for AI agent lead generation
+export const leads = pgTable("leads", {
+  id: uuid("id").primaryKey().notNull(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  // Core lead information
+  fullName: varchar("full_name").notNull(),
+  emailAddress: varchar("email_address"),
+  phoneNumber: varchar("phone_number"),
+  country: varchar("country"),
+  location: varchar("location").notNull(),
+  industry: varchar("industry").notNull(),
+  companyName: varchar("company_name").notNull(),
+  jobTitle: varchar("job_title").notNull(),
+  seniority: varchar("seniority"),
+  websiteUrl: varchar("website_url"),
+  linkedinUrl: varchar("linkedin_url"),
+  // Status and scoring
+  leadStatus: varchar("lead_status").default("new"), // new, contacted, qualified, converted, rejected
+  contactStatus: varchar("contact_status").default("not_contacted"), // not_contacted, email_sent, responded, bounced
+  leadScore: integer("lead_score").default(0), // 0-100 lead quality score
+  // Metadata
+  source: varchar("source").default("Falcon"),
+  tags: jsonb("tags").default("[]"),
+  notes: text("notes"),
+  // External tracking
+  n8nExecutionId: varchar("n8n_execution_id"),
+  apolloPersonId: varchar("apollo_person_id"),
+  apolloOrganizationId: varchar("apollo_organization_id"),
+  // Qualification fields
+  qualificationRating: varchar("qualification_rating"), // high, medium, low
+  qualificationScore: integer("qualification_score").default(0), // 0-100
+  qualificationDate: timestamp("qualification_date"),
+  qualificationCriteria: jsonb("qualification_criteria").default("{}"),
+  qualificationReasoning: text("qualification_reasoning"),
+  autoQualified: boolean("auto_qualified").default(false),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  lastContactedAt: timestamp("last_contacted_at"),
+});
+
+// Lead qualification jobs table for background processing
+export const leadQualificationJobs = pgTable("lead_qualification_jobs", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  leadId: uuid("lead_id").references(() => leads.id),
+  // Job configuration
+  jobType: varchar("job_type").notNull(), // single_lead, bulk_qualification, auto_qualification
+  jobStatus: varchar("job_status").default("queued"), // queued, processing, completed, failed, cancelled
+  priority: integer("priority").default(5), // 1-10, 1 = highest
+  // Processing details
+  leadsToProcess: integer("leads_to_process").default(1),
+  leadsProcessed: integer("leads_processed").default(0),
+  leadsQualified: integer("leads_qualified").default(0),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  processingTimeMs: integer("processing_time_ms"),
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  maxRetries: integer("max_retries").default(3),
+  // Results
+  qualificationResults: jsonb("qualification_results").default("{}"),
+  tokensUsed: integer("tokens_used").default(0),
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Research reports table for AI agent research outputs
+export const researchReports = pgTable("research_reports", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  leadId: varchar("lead_id").references(() => leads.id),
+  jobId: varchar("job_id"), // References agent_jobs but not enforced due to different schema
+  // Report content
+  reportTitle: varchar("report_title").notNull(),
+  reportContent: text("report_content").notNull(), // HTML content
+  reportType: varchar("report_type").default("linkedin_research"), // linkedin_research, company_research, market_research
+  // Metadata
+  researchSources: jsonb("research_sources").default("[]"), // Array of sources used
+  confidenceScore: integer("confidence_score").default(0), // 0-100 confidence score
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type Lead = typeof leads.$inferSelect;
+export type UpsertLead = typeof leads.$inferInsert;
+export type ResearchReport = typeof researchReports.$inferSelect;
+export type UpsertResearchReport = typeof researchReports.$inferInsert;
 
 export const insertContactSubmissionSchema = createInsertSchema(
   contactSubmissions
@@ -233,6 +331,26 @@ export const orderItems = pgTable("order_items", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications table for real-time AI agent notifications
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  type: varchar("type").notNull(), // job_completed, job_failed, job_started, system_notification, maintenance_notification
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  agentName: varchar("agent_name"), // prism, falcon, sage, sentinel
+  jobId: varchar("job_id"),
+  jobType: varchar("job_type"),
+  metadata: jsonb("metadata").default("{}"),
+  isRead: boolean("is_read").default(false),
+  isDismissed: boolean("is_dismissed").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  readAt: timestamp("read_at"),
+  dismissedAt: timestamp("dismissed_at"),
+});
+
 // TypeScript types for the new tables
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
@@ -246,3 +364,5 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

@@ -10,38 +10,47 @@ import { GlowingEffect } from "@/components/ui/glowing-effect";
 const services = [
   {
     icon: Search,
-    title: "LeadGen Agent",
+    title: "Falcon",
+    agentType: "Lead Generation Agent",
+    logo: "/falcon.png",
     description:
-      "Intelligent lead discovery system that finds qualified prospects based on your specific location, occupation, and industry criteria with 95% accuracy.",
+      "Meet Falcon, your precision lead hunter. This intelligent AI agent soars through vast databases to find qualified prospects based on your specific location, occupation, and industry criteria with 95% accuracy.",
     features: [
       "Location-based targeting",
       "Industry-specific filtering",
       "Occupation matching",
       "Real-time lead scoring",
+      "Advanced prospect qualification",
     ],
   },
   {
     icon: Linkedin,
-    title: "LinkedIn Research Agent",
+    title: "Sage",
+    agentType: "Lead Research Agent",
+    logo: "/sage.png",
     description:
-      "Advanced LinkedIn profile scraping and analysis that compiles detailed research reports and delivers them directly to your email inbox.",
+      "Meet Sage, your research mastermind. This wise AI agent conducts advanced LinkedIn profile analysis and compiles comprehensive research reports delivered directly to your email inbox.",
     features: [
       "Profile data extraction",
       "Automated research reports",
       "Email delivery system",
       "Contact information discovery",
+      "Competitive intelligence",
     ],
   },
   {
     icon: Mail,
-    title: "Auto-Reply Agent",
+    title: "Sentinel",
+    agentType: "Auto-Reply Agent",
+    logo: "/sentinel.png",
     description:
-      "Sophisticated email automation that responds to sales inquiries with personalized messages, increasing response rates by 300%.",
+      "Meet Sentinel, your communication guardian. This sophisticated AI agent stands watch over your inbox, responding to sales inquiries with personalized messages, increasing response rates by 300%.",
     features: [
       "Personalized responses",
       "Smart email templates",
       "Follow-up sequences",
       "Performance analytics",
+      "24/7 inbox monitoring",
     ],
   },
 ];
@@ -58,11 +67,12 @@ export default function ServicesSection() {
         <ParallaxItem direction="up" distance={30}>
           <div className="text-center mb-10 sm:mb-12 md:mb-16">
             <h2 className="text-fluid-3xl sm:text-fluid-4xl font-bold text-foreground mb-3 sm:mb-4">
-              AI-Powered Lead Generation System
+              Meet Your AI Agent Team
             </h2>
             <p className="text-fluid-lg sm:text-fluid-xl text-muted-foreground max-w-3xl mx-auto">
-              Three interconnected AI agents that work together to find,
-              research, and engage qualified leads automatically.
+              Falcon, Sage, and Sentinel - three specialized AI agents that work
+              together to find, research, and engage qualified leads
+              automatically.
             </p>
           </div>
         </ParallaxItem>
@@ -93,13 +103,28 @@ export default function ServicesSection() {
                     <div className="relative h-full flex flex-col z-10">
                       <Card className="bg-card border-none shadow-none h-full flex flex-col">
                         <CardContent className="p-4 sm:p-5 md:p-6 flex flex-col flex-grow">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-[#38B6FF] rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-5 md:mb-6 flex-shrink-0">
-                            <Icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
+                          {/* Agent Logo Container */}
+                          <div className="mb-4 sm:mb-5 md:mb-6 flex-shrink-0">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl overflow-hidden">
+                              <img
+                                src={service.logo}
+                                alt={`${service.title} Agent Logo`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                           </div>
-                          <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3 md:mb-4 flex-shrink-0">
-                            {service.title}
-                          </h3>
-                          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5 md:mb-6">
+
+                          {/* Agent Name and Type */}
+                          <div className="mb-3 sm:mb-4 flex-shrink-0">
+                            <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+                              {service.title}
+                            </h3>
+                            <p className="text-sm sm:text-base text-[#38B6FF] font-medium">
+                              {service.agentType}
+                            </p>
+                          </div>
+
+                          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5 md:mb-6 leading-relaxed">
                             {service.description}
                           </p>
                           <ul className="space-y-1 sm:space-y-2 mb-4 sm:mb-5 md:mb-6 flex-grow">

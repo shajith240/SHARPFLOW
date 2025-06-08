@@ -43,9 +43,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 sm:mb-12">
           <div className="col-span-1 xs:col-span-2 md:col-span-1">
             <img
-              src="/sharpflow.png"
+              src="/footer_logo.svg"
               alt="SharpFlow Logo"
-              className="h-6 sm:h-8 w-auto mb-4 sm:mb-6"
+              className="h-16 sm:h-20 md:h-24 w-auto mb-4 sm:mb-6"
             />
             <p className="text-xs sm:text-sm text-muted-foreground mb-4">
               Empowering businesses with cutting-edge AI automation solutions

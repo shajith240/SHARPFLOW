@@ -11,7 +11,13 @@ import PaymentSuccess from "./pages/payment-success";
 import PaymentCancel from "./pages/payment-cancel";
 import Dashboard from "./pages/dashboard";
 import SettingsPage from "./pages/settings";
+import AgentChatPage from "./pages/agent-chat";
+import OwnerDashboardPage from "./pages/OwnerDashboardPage";
+import AIAgenticSetupPage from "./pages/ai-agentic-setup";
+import LeadQualificationTestPage from "./pages/lead-qualification-test";
+
 import ScrollToTop from "./components/ScrollToTop";
+import { Toaster } from "./components/ui/toaster";
 
 function Router() {
   const { isInitialLoading, setAppReady } = useGlobalLoading();
@@ -36,7 +42,18 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/dashboard/settings" component={SettingsPage} />
+      <Route path="/dashboard/ai-agents" component={AgentChatPage} />
+      <Route
+        path="/dashboard/ai-agentic-setup"
+        component={AIAgenticSetupPage}
+      />
+      <Route
+        path="/dashboard/lead-qualification-test"
+        component={LeadQualificationTestPage}
+      />
+      <Route path="/owner/dashboard" component={OwnerDashboardPage} />
       <Route path="/dashboard" component={Dashboard} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -47,6 +64,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <ScrollToTop />
+      <Toaster />
     </QueryClientProvider>
   );
 }

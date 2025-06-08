@@ -31,7 +31,9 @@ export function useGlobalLoading() {
 
   useEffect(() => {
     const unsubscribe = subscribe(setState);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const setAppReady = useCallback(() => {

@@ -95,3 +95,30 @@ vite.config.ts.*
 # Temporary files
 *.tmp
 *.temp
+
+# ============================================================================
+# CI/CD Pipeline Files
+# ============================================================================
+# Test results
+junit.xml
+test-results/
+
+# Docker build cache
+.docker/
+
+# GitHub Actions cache
+.github/workflows/*.yml.bak
+
+# Security scan results
+trivy-results.sarif
+trivy-fs-results.sarif
+audit-results.json
+licenses.json
+
+# Deployment artifacts
+deployment-*.log
+health-check-*.log
+
+# CI/CD temporary files
+ci-temp/
+cd-temp/

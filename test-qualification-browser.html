@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Qualification API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #0a0a0a; color: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 8px; background: #181818; }
+        .test-button { background: #38B6FF; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        .test-button:hover { background: #2a9ae6; }
+        .success { color: #C1FF72; }
+        .error { color: #ff6b6b; }
+        .result { margin: 10px 0; padding: 10px; background: #222; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+        .status { font-weight: bold; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Lead Qualification API Test Suite</h1>
+        <p>This page tests the lead qualification API endpoints using your browser session.</p>
+        
+        <div class="test-section">
+            <h3>📊 Statistics & Summary</h3>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/stats', 'GET')">Get Qualification Stats</button>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/summary', 'GET')">Get Summary</button>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/unqualified', 'GET')">Get Unqualified Leads</button>
+        </div>
+
+        <div class="test-section">
+            <h3>⚙️ Setup & Configuration</h3>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/setup', 'POST')">Setup Qualification Rules</button>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/rules', 'GET')">Get Qualification Rules</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Bulk Operations</h3>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/bulk/start', 'POST')">Start Bulk Qualification</button>
+            <button class="test-button" onclick="testEndpoint('/api/lead-qualification/jobs/recent', 'GET')">Get Recent Jobs</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Individual Operations</h3>
+            <button class="test-button" onclick="testSingleLead()">Qualify Single Lead</button>
+            <button class="test-button" onclick="testRequalification()">Re-qualify Leads</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let testCount = 0;
+
+        async function testEndpoint(endpoint, method = 'GET', body = null) {
+            testCount++;
+            const testId = `test-${testCount}`;
+            
+            addResult(testId, `🧪 Testing ${method} ${endpoint}`, 'info');
+            
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include' // Include cookies for authentication
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(testId, `✅ Success (${response.status})`, 'success');
+                    addResult(testId, JSON.stringify(data, null, 2), 'result');
+                } else {
+                    addResult(testId, `❌ Error (${response.status})`, 'error');
+                    addResult(testId, JSON.stringify(data, null, 2), 'result');
+                }
+            } catch (error) {
+                addResult(testId, `❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSingleLead() {
+            // First get a lead ID
+            try {
+                const response = await fetch('/api/leads?limit=1', { credentials: 'include' });
+                const data = await response.json();
+                
+                if (data.leads && data.leads.length > 0) {
+                    const leadId = data.leads[0].id;
+                    await testEndpoint(`/api/lead-qualification/single/${leadId}`, 'POST');
+                } else {
+                    addResult('single-lead', '❌ No leads found to test with', 'error');
+                }
+            } catch (error) {
+                addResult('single-lead', `❌ Error getting lead: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRequalification() {
+            // Test with dummy lead IDs
+            const body = {
+                leadIds: ['test-lead-1', 'test-lead-2']
+            };
+            await testEndpoint('/api/lead-qualification/requalify', 'POST', body);
+        }
+
+        function addResult(testId, message, type) {
+            const resultsDiv = document.getElementById('results');
+            const resultElement = document.createElement('div');
+            resultElement.className = `result ${type}`;
+            
+            if (type === 'info') {
+                resultElement.innerHTML = `<div class="status">${message}</div>`;
+            } else {
+                resultElement.textContent = message;
+            }
+            
+            resultsDiv.appendChild(resultElement);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            setTimeout(() => {
+                addResult('auto', '🚀 Running automatic tests...', 'info');
+                testEndpoint('/api/lead-qualification/stats', 'GET');
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

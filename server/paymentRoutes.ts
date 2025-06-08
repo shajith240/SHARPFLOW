@@ -2,7 +2,10 @@ import type { Express } from "express";
 import { paypalService, PAYPAL_PLAN_IDS, PLAN_PRICING } from "./paypal";
 import { storage } from "./storage";
 import { isAuthenticated } from "./googleAuth";
+import { OwnerNotificationService } from "./services/OwnerNotificationService.js";
 import crypto from "crypto";
+
+const ownerNotificationService = new OwnerNotificationService();
 
 export function registerPaymentRoutes(app: Express) {
   // Create subscription
@@ -427,7 +430,7 @@ async function handleSubscriptionActivated(subscription: any) {
     planType = "enterprise";
   }
 
-  // Update user subscription status
+  // Update user subscription status - set to pending activation initially
   await storage.updateUserSubscription(userId, {
     paypalCustomerId: subscription.subscriber?.payer_id || "",
     subscriptionStatus: "active",
@@ -436,6 +439,7 @@ async function handleSubscriptionActivated(subscription: any) {
       subscription.billing_info?.next_billing_time ||
         Date.now() + 30 * 24 * 60 * 60 * 1000
     ),
+    activationStatus: "pending", // User must wait for owner to configure API keys
   });
 
   // Create or update subscription record
@@ -464,6 +468,19 @@ async function handleSubscriptionActivated(subscription: any) {
       ),
       cancelAtPeriodEnd: false,
     });
+  }
+
+  // 🔔 Notify owner about new subscription for manual setup
+  try {
+    await ownerNotificationService.notifyNewSubscription(userId, {
+      subscriptionPlan: planType,
+      subscriptionId: subscription.id,
+      paypalCustomerId: subscription.subscriber?.payer_id || "",
+    });
+    console.log(`✅ Owner notification sent for new subscription: ${userId}`);
+  } catch (error) {
+    console.error("❌ Failed to send owner notification:", error);
+    // Don't fail the subscription activation if notification fails
   }
 }
 

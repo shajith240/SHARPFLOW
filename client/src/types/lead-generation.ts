@@ -23,6 +23,14 @@ export interface Lead {
   contact_status?: "not_contacted" | "email_sent" | "responded" | "bounced";
   lead_score: number; // 0-100 lead quality score
 
+  // Qualification fields
+  qualification_rating?: "high" | "medium" | "low";
+  qualification_score?: number; // 0-100 AI qualification score
+  qualification_date?: string;
+  qualification_criteria?: Record<string, any>;
+  qualification_reasoning?: string;
+  auto_qualified?: boolean;
+
   // Metadata
   source?: string;
   tags?: string[];
@@ -37,6 +45,9 @@ export interface Lead {
   created_at: string;
   updated_at?: string;
   last_contacted_at?: string;
+
+  // Research report (optional)
+  research_report?: string; // HTML content of research report
 
   // Legacy compatibility (computed properties)
   name?: string; // computed from full_name
@@ -86,7 +97,7 @@ export interface EmailCampaign {
 }
 
 export interface AgentStatus {
-  name: "LeadGen Agent" | "LinkedIn Research Agent" | "Auto-Reply Agent";
+  name: "Falcon" | "Sage" | "Sentinel";
   status: "active" | "processing" | "idle" | "error";
   lastActivity: string;
   tasksCompleted: number;
@@ -115,10 +126,71 @@ export interface LeadGenerationMetrics {
   roi: number;
 }
 
+// Qualification System Types
+export interface QualificationStats {
+  totalLeads: number;
+  qualifiedLeads: number;
+  highQualityLeads: number;
+  mediumQualityLeads: number;
+  lowQualityLeads: number;
+  unqualifiedLeads: number;
+  avgQualificationScore: number;
+  qualificationRate: number; // percentage of leads qualified
+}
+
+export interface QualificationJob {
+  id: string;
+  userId: string;
+  leadId?: string;
+  jobType: "single_lead" | "bulk_qualification" | "auto_qualification";
+  jobStatus: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  priority: number;
+  leadsToProcess: number;
+  leadsProcessed: number;
+  leadsQualified: number;
+  startedAt?: string;
+  completedAt?: string;
+  processingTimeMs?: number;
+  errorMessage?: string;
+  retryCount: number;
+  maxRetries: number;
+  qualificationResults: Record<string, any>;
+  tokensUsed: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BulkQualificationRequest {
+  leadIds?: string[];
+  filters?: {
+    industry?: string;
+    location?: string;
+    leadStatus?: string;
+    dateRange?: {
+      start: string;
+      end: string;
+    };
+  };
+  priority?: number;
+}
+
+export interface QualificationFilter {
+  rating?: "high" | "medium" | "low" | "unqualified";
+  scoreRange?: {
+    min: number;
+    max: number;
+  };
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  autoQualified?: boolean;
+}
+
 // Plan-specific feature access
 export const PLAN_FEATURES = {
   starter: {
-    agents: ["LeadGen Agent"],
+    agents: ["Falcon"],
     maxLeadsPerMonth: 100,
     researchReports: false,
     emailAutomation: false,
@@ -127,7 +199,7 @@ export const PLAN_FEATURES = {
     support: "Email",
   },
   professional: {
-    agents: ["LeadGen Agent", "LinkedIn Research Agent"],
+    agents: ["Falcon", "Sage"],
     maxLeadsPerMonth: 500,
     researchReports: true,
     emailAutomation: false,
@@ -136,7 +208,7 @@ export const PLAN_FEATURES = {
     support: "Priority Email",
   },
   ultra: {
-    agents: ["LeadGen Agent", "LinkedIn Research Agent", "Auto-Reply Agent"],
+    agents: ["Falcon", "Sage", "Sentinel"],
     maxLeadsPerMonth: 1000,
     researchReports: true,
     emailAutomation: true,

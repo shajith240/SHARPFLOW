@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "./useAuth";
+import { io, Socket } from "socket.io-client";
 
 export interface WebSocketMessage {
   type: string;
@@ -18,7 +19,7 @@ export function useWebSocket(): WebSocketHookReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useAuth();
 
@@ -26,76 +27,110 @@ export function useWebSocket(): WebSocketHookReturn {
     if (!user) return;
 
     try {
-      // For now, we'll use a simple user ID approach
-      // In production, you'd want to implement proper JWT token authentication
-      const wsUrl = `${
-        process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000"
-      }/ws?userId=${user.id}`;
-      const ws = new WebSocket(wsUrl);
+      // Create Socket.IO connection
+      const serverUrl = import.meta.env.VITE_WS_URL || "http://localhost:3000";
 
-      ws.onopen = () => {
-        console.log("WebSocket connected");
+      // For now, we'll connect without authentication token
+      // In production, you'd want to implement proper JWT token authentication
+      const socket = io(serverUrl, {
+        transports: ["websocket", "polling"],
+        auth: {
+          userId: user.id,
+        },
+        query: {
+          userId: user.id,
+        },
+      });
+
+      socket.on("connect", () => {
+        console.log("Socket.IO connected");
         setIsConnected(true);
         setConnectionError(null);
+      });
 
-        // Send initial ping
-        ws.send(JSON.stringify({ type: "ping" }));
-      };
+      socket.on("connected", (data) => {
+        console.log("Socket.IO connection established:", data);
+        setLastMessage({
+          type: "connection_established",
+          data,
+          timestamp: new Date().toISOString(),
+        });
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          setLastMessage(message);
+      // Handle job progress updates
+      socket.on("job:progress", (data) => {
+        console.log("Job progress update:", data);
+        setLastMessage({
+          type: "job_progress",
+          data,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
 
-          // Handle specific message types
-          switch (message.type) {
-            case "connection_established":
-              console.log("WebSocket connection established:", message.data);
-              break;
-            case "job_progress":
-              console.log("Job progress update:", message.data);
-              break;
-            case "job_completed":
-              console.log("Job completed:", message.data);
-              break;
-            case "job_failed":
-              console.log("Job failed:", message.data);
-              break;
-            case "agent_status_update":
-              console.log("Agent status update:", message.data);
-              break;
-            default:
-              console.log("WebSocket message:", message);
-          }
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
-        }
-      };
+      // Handle job completion
+      socket.on("job:completed", (data) => {
+        console.log("Job completed:", data);
+        setLastMessage({
+          type: "job_completed",
+          data,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
 
-      ws.onclose = (event) => {
-        console.log("WebSocket disconnected:", event.code, event.reason);
+      // Handle job errors
+      socket.on("job:error", (data) => {
+        console.log("Job failed:", data);
+        setLastMessage({
+          type: "job_failed",
+          data,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
+
+      // Handle chat messages
+      socket.on("chat:message", (data) => {
+        console.log("Chat message received:", data);
+        setLastMessage({
+          type: "chat_message",
+          data,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
+
+      // Handle agent status updates
+      socket.on("agent:status", (data) => {
+        console.log("Agent status update:", data);
+        setLastMessage({
+          type: "agent_status_update",
+          data,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
+
+      socket.on("disconnect", (reason) => {
+        console.log("Socket.IO disconnected:", reason);
         setIsConnected(false);
-        wsRef.current = null;
+        socketRef.current = null;
 
         // Attempt to reconnect after 3 seconds if not a normal closure
-        if (event.code !== 1000 && user) {
+        if (reason !== "io client disconnect" && user) {
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log("Attempting to reconnect WebSocket...");
+            console.log("Attempting to reconnect Socket.IO...");
             connect();
           }, 3000);
         }
-      };
+      });
 
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        setConnectionError("WebSocket connection error");
+      socket.on("connect_error", (error) => {
+        console.error("Socket.IO connection error:", error);
+        setConnectionError("Socket.IO connection error");
         setIsConnected(false);
-      };
+      });
 
-      wsRef.current = ws;
+      socketRef.current = socket;
     } catch (error) {
-      console.error("Failed to connect WebSocket:", error);
-      setConnectionError("Failed to establish WebSocket connection");
+      console.error("Failed to connect Socket.IO:", error);
+      setConnectionError("Failed to establish Socket.IO connection");
     }
   }, [user]);
 
@@ -105,22 +140,40 @@ export function useWebSocket(): WebSocketHookReturn {
       reconnectTimeoutRef.current = null;
     }
 
-    if (wsRef.current) {
-      wsRef.current.close(1000, "User disconnected");
-      wsRef.current = null;
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
   }, []);
 
   const sendMessage = useCallback((message: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
+    if (socketRef.current && socketRef.current.connected) {
+      // Send message based on type
+      switch (message.type) {
+        case "chat:message":
+          socketRef.current.emit("chat:message", message.data);
+          break;
+        case "agent:start_job":
+          socketRef.current.emit("agent:start_job", message.data);
+          break;
+        case "agent:get_status":
+          socketRef.current.emit("agent:get_status");
+          break;
+        case "job:get_status":
+          socketRef.current.emit("job:get_status", message.data);
+          break;
+        default:
+          socketRef.current.emit(message.type, message.data);
+      }
     } else {
-      console.warn("WebSocket not connected, cannot send message");
+      console.warn("Socket.IO not connected, cannot send message");
     }
   }, []);
 
   useEffect(() => {
-    if (user) {
+    // Temporarily disable auto-connect for development
+    // TODO: Re-enable when WebSocket issues are resolved
+    if (false && user) {
       connect();
     } else {
       disconnect();
@@ -205,7 +258,7 @@ export function useAgentStatus() {
   return { agentStatus, requestAgentStatus };
 }
 
-// Hook for real-time notifications
+// Hook for real-time notifications with Zustand store integration
 export function useRealTimeNotifications() {
   const { lastMessage } = useWebSocket();
   const [notifications, setNotifications] = useState<WebSocketMessage[]>([]);
@@ -214,8 +267,13 @@ export function useRealTimeNotifications() {
     if (!lastMessage) return;
 
     const notificationTypes = [
+      "notification:new",
+      "notification:read",
+      "notification:dismissed",
+      "notification:all_read",
       "job_completed",
       "job_failed",
+      "job_started",
       "system_notification",
       "maintenance_notification",
     ];

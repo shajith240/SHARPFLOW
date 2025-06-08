@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleanup System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #f5f5f5;
+        }
+        .container {
+            background: #181818;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #38B6FF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #2a9ae6;
+        }
+        .button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #C1FF72;
+        }
+        .error {
+            border-left: 4px solid #ff4444;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .status-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #38B6FF;
+        }
+        .status-label {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+        }
+        h1, h2 {
+            color: #C1FF72;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧹 Conversation Cleanup System Test</h1>
+    
+    <div class="container">
+        <h2>📊 Cleanup Status</h2>
+        <button class="button" onclick="getCleanupStatus()">Get Cleanup Status</button>
+        <div id="statusResult" class="result" style="display: none;"></div>
+        
+        <div id="statusGrid" class="status-grid" style="display: none;">
+            <div class="status-card">
+                <div id="retentionDays" class="status-value">-</div>
+                <div class="status-label">Retention Days</div>
+            </div>
+            <div class="status-card">
+                <div id="batchSize" class="status-value">-</div>
+                <div class="status-label">Batch Size</div>
+            </div>
+            <div class="status-card">
+                <div id="isRunning" class="status-value">-</div>
+                <div class="status-label">Status</div>
+            </div>
+            <div class="status-card">
+                <div id="lastCleanup" class="status-value">-</div>
+                <div class="status-label">Last Cleanup</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🚀 Manual Cleanup</h2>
+        <button class="button" onclick="runManualCleanup()" id="cleanupBtn">Run Manual Cleanup</button>
+        <div id="cleanupResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>⚙️ Retention Settings</h2>
+        <div style="margin-bottom: 15px;">
+            <label for="agentSelect">Agent:</label>
+            <select id="agentSelect" style="margin: 0 10px; padding: 5px;">
+                <option value="prism">Prism (Universal Orchestrator)</option>
+                <option value="falcon">Falcon (Lead Generation)</option>
+                <option value="sage">Sage (Lead Research)</option>
+                <option value="sentinel">Sentinel (Email Automation)</option>
+            </select>
+            
+            <label for="retentionInput">Retention Days:</label>
+            <input type="number" id="retentionInput" min="1" max="365" value="30" style="margin: 0 10px; padding: 5px; width: 80px;">
+            
+            <button class="button" onclick="updateRetention()">Update Retention</button>
+        </div>
+        <div id="retentionResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>💬 Test Conversation Data</h2>
+        <button class="button" onclick="createTestMessages()">Create Test Messages</button>
+        <button class="button" onclick="getConversationHistory()">Get Conversation History</button>
+        <div id="testResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Utility function to make API calls
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Display result in a container
+        function displayResult(containerId, result, isSuccess = true) {
+            const container = document.getElementById(containerId);
+            container.style.display = 'block';
+            container.className = `result ${isSuccess ? 'success' : 'error'}`;
+            container.textContent = JSON.stringify(result, null, 2);
+        }
+
+        // Get cleanup status
+        async function getCleanupStatus() {
+            const result = await apiCall('/api/ai-agents/conversations/cleanup/status');
+            displayResult('statusResult', result, result.success);
+            
+            if (result.success && result.data.status) {
+                const status = result.data.status;
+                document.getElementById('retentionDays').textContent = status.config.retentionDays;
+                document.getElementById('batchSize').textContent = status.config.batchSize;
+                document.getElementById('isRunning').textContent = status.isRunning ? 'Running' : 'Idle';
+                document.getElementById('lastCleanup').textContent = status.lastCleanup ? 
+                    new Date(status.lastCleanup).toLocaleString() : 'Never';
+                document.getElementById('statusGrid').style.display = 'grid';
+            }
+        }
+
+        // Run manual cleanup
+        async function runManualCleanup() {
+            const btn = document.getElementById('cleanupBtn');
+            btn.disabled = true;
+            btn.textContent = 'Running Cleanup...';
+            
+            const result = await apiCall('/api/ai-agents/conversations/cleanup/run', {
+                method: 'POST'
+            });
+            
+            displayResult('cleanupResult', result, result.success);
+            
+            btn.disabled = false;
+            btn.textContent = 'Run Manual Cleanup';
+            
+            // Refresh status after cleanup
+            if (result.success) {
+                setTimeout(getCleanupStatus, 1000);
+            }
+        }
+
+        // Update retention settings
+        async function updateRetention() {
+            const agent = document.getElementById('agentSelect').value;
+            const days = parseInt(document.getElementById('retentionInput').value);
+            
+            if (!days || days < 1 || days > 365) {
+                displayResult('retentionResult', { error: 'Please enter a valid number of days (1-365)' }, false);
+                return;
+            }
+            
+            const result = await apiCall(`/api/ai-agents/conversations/retention/${agent}`, {
+                method: 'PUT',
+                body: JSON.stringify({ retentionDays: days })
+            });
+            
+            displayResult('retentionResult', result, result.success);
+        }
+
+        // Create test messages for testing cleanup
+        async function createTestMessages() {
+            const messages = [
+                "Hello, this is a test message for cleanup testing",
+                "Can you help me with lead generation?",
+                "What's the status of my recent leads?",
+                "Please send me a summary of today's activities",
+                "Test message for conversation memory system"
+            ];
+            
+            let results = [];
+            
+            for (let i = 0; i < messages.length; i++) {
+                // Simulate sending messages to Prism
+                const result = await apiCall('/api/ai-agents/conversations/history/prism', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        message: messages[i],
+                        role: 'user'
+                    })
+                });
+                results.push(`Message ${i + 1}: ${result.success ? 'Sent' : 'Failed'}`);
+                
+                // Small delay between messages
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            displayResult('testResult', { 
+                message: 'Test messages creation completed',
+                results: results
+            }, true);
+        }
+
+        // Get conversation history
+        async function getConversationHistory() {
+            const result = await apiCall('/api/ai-agents/conversations/history/prism?limit=10');
+            displayResult('testResult', result, result.success);
+        }
+
+        // Auto-load status on page load
+        window.addEventListener('load', () => {
+            getCleanupStatus();
+        });
+    </script>
+</body>
+</html>

@@ -1,9 +1,36 @@
 import type { Express } from "express";
 import { requireActiveSubscription } from "./googleAuth";
 import { storage } from "./storage";
+import { supabase } from "./db";
 import crypto from "crypto";
 
 export function registerDashboardRoutes(app: Express) {
+  // Check user activation status
+  app.get("/api/dashboard/activation-status", async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Get user activation status using database function
+      const { data: result, error } = await supabase.rpc(
+        "get_user_activation_status",
+        { target_user_id: userId }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking activation status:", error);
+      res.status(500).json({ message: "Failed to check activation status" });
+    }
+  });
+
   // Lead Generation Dashboard overview - get user stats and analytics
   app.get(
     "/api/dashboard/overview",
@@ -72,14 +99,10 @@ export function registerDashboardRoutes(app: Express) {
               emailAutomation: user.subscriptionPlan === "ultra",
               agents:
                 user.subscriptionPlan === "ultra"
-                  ? [
-                      "LeadGen Agent",
-                      "LinkedIn Research Agent",
-                      "Auto-Reply Agent",
-                    ]
+                  ? ["Falcon", "Sage", "Sentinel"]
                   : user.subscriptionPlan === "professional"
-                  ? ["LeadGen Agent", "LinkedIn Research Agent"]
-                  : ["LeadGen Agent"],
+                  ? ["Falcon", "Sage"]
+                  : ["Falcon"],
             },
           },
         };

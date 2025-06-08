@@ -30,13 +30,21 @@ export function transformDatabaseLead(dbLead: any): Lead {
     contact_status: dbLead.contact_status || "not_contacted",
     lead_score: dbLead.lead_score || 0,
 
+    // Qualification fields
+    qualification_rating: dbLead.qualification_rating,
+    qualification_score: dbLead.qualification_score,
+    qualification_date: dbLead.qualification_date,
+    qualification_criteria: dbLead.qualification_criteria,
+    qualification_reasoning: dbLead.qualification_reasoning,
+    auto_qualified: dbLead.auto_qualified,
+
     // Metadata
-    source: dbLead.source || "telegram",
+    source: dbLead.source || "falcon",
     tags: dbLead.tags || [],
     notes: dbLead.notes,
 
     // External tracking
-    n8n_execution_id: dbLead.n8n_execution_id,
+    // n8n_execution_id: dbLead.n8n_execution_id, // Deprecated
     apollo_person_id: dbLead.apollo_person_id,
     apollo_organization_id: dbLead.apollo_organization_id,
 

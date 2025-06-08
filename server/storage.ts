@@ -35,6 +35,7 @@ export interface IStorage {
       subscriptionStatus?: string;
       subscriptionPlan?: string;
       subscriptionPeriodEnd?: Date;
+      activationStatus?: string;
     }
   ): Promise<User>;
 
@@ -174,6 +175,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionPeriodEnd: data.subscription_period_end
           ? new Date(data.subscription_period_end)
           : undefined,
+        activationStatus: data.activation_status,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -218,6 +220,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionPeriodEnd: data.subscription_period_end
           ? new Date(data.subscription_period_end)
           : undefined,
+        activationStatus: data.activation_status,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -279,6 +282,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionPeriodEnd: data.subscription_period_end
           ? new Date(data.subscription_period_end)
           : undefined,
+        activationStatus: data.activation_status,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -329,6 +333,7 @@ export class SupabaseStorage implements IStorage {
       subscriptionStatus?: string;
       subscriptionPlan?: string;
       subscriptionPeriodEnd?: Date;
+      activationStatus?: string;
     }
   ): Promise<User> {
     try {
@@ -352,6 +357,9 @@ export class SupabaseStorage implements IStorage {
       if (subscriptionData.subscriptionPeriodEnd) {
         updateData.subscription_period_end =
           subscriptionData.subscriptionPeriodEnd.toISOString();
+      }
+      if (subscriptionData.activationStatus) {
+        updateData.activation_status = subscriptionData.activationStatus;
       }
 
       const { data, error } = await supabase
@@ -377,6 +385,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionPeriodEnd: data.subscription_period_end
           ? new Date(data.subscription_period_end)
           : undefined,
+        activationStatus: data.activation_status,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };

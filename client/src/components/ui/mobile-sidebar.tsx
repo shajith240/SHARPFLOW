@@ -244,11 +244,11 @@ const MobileSidebar = () => {
                           userEmail={user.email}
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-[#38B6FF] rounded-full flex items-center justify-center">
+                        <div className="w-16 h-16 bg-[#38B6FF] rounded-full flex items-center justify-center">
                           <img
-                            src="/sharpflow.png"
+                            src="/navbar_logo.svg"
                             alt="SharpFlow Logo"
-                            className="w-8 h-8 object-contain"
+                            className="w-14 h-14 object-contain"
                           />
                         </div>
                       )}

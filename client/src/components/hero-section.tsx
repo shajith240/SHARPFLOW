@@ -34,8 +34,9 @@ export default function HeroSection() {
             <ParallaxItem delay={0.3} direction="left" distance={30}>
               <p className="text-fluid-lg sm:text-fluid-xl text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
                 Find, research, and engage qualified leads automatically with
-                our three interconnected AI agents. Scale your sales pipeline
-                with SharpFlow's intelligent automation.
+                Falcon, Sage, and Sentinel - your specialized AI agent team.
+                Scale your sales pipeline with SharpFlow's intelligent
+                automation.
               </p>
             </ParallaxItem>
 

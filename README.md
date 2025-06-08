@@ -9,6 +9,10 @@
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-green.svg)](https://supabase.com/)
 
+[![CI Pipeline](https://github.com/shajith240/SHARPFLOW/actions/workflows/ci.yml/badge.svg)](https://github.com/shajith240/SHARPFLOW/actions/workflows/ci.yml)
+[![CD Pipeline](https://github.com/shajith240/SHARPFLOW/actions/workflows/cd.yml/badge.svg)](https://github.com/shajith240/SHARPFLOW/actions/workflows/cd.yml)
+[![Security Scan](https://github.com/shajith240/SHARPFLOW/actions/workflows/security.yml/badge.svg)](https://github.com/shajith240/SHARPFLOW/actions/workflows/security.yml)
+
 </div>
 
 ## 🚀 Overview
@@ -57,8 +61,7 @@
 
 - **PayPal API** - Payment processing and subscription management
 - **Google OAuth** - Secure user authentication
-- **Telegram Bot API** - Automated messaging and lead capture
-- **n8n** - Workflow automation platform
+- **OpenAI API** - AI-powered lead generation and research
 - **Apify** - Web scraping and data extraction
 
 ### Development Tools
@@ -104,6 +107,30 @@ cp .env.example .env
 
 Edit the `.env` file with your configuration:
 
+## 🔄 CI/CD Pipeline
+
+SharpFlow includes a comprehensive CI/CD pipeline with GitHub Actions for automated testing, building, and deployment.
+
+### 📋 Pipeline Overview
+
+- **🔄 Continuous Integration** - Automated testing, linting, and build verification
+- **🚀 Continuous Deployment** - Automated deployment to staging and production
+- **🔒 Security Scanning** - Vulnerability and dependency scanning
+- **🏷️ Release Management** - Automated versioning and releases
+- **📦 Dependency Updates** - Automated security and dependency updates
+
+### 🛠️ Pipeline Features
+
+- **Multi-tenant testing** - Ensures proper isolation between users
+- **Docker containerization** - Consistent deployment across environments
+- **Health checks** - Comprehensive application verification
+- **Security scanning** - CodeQL, Trivy, and dependency auditing
+- **Automated rollbacks** - Safe deployment with rollback capabilities
+
+For detailed CI/CD documentation, see [CI-CD-PIPELINE-GUIDE.md](CI-CD-PIPELINE-GUIDE.md).
+
+Edit the `.env` file with your configuration:
+
 ```env
 # Supabase Configuration
 SUPABASE_URL=your_supabase_project_url
@@ -124,15 +151,11 @@ PAYPAL_CLIENT_ID=your_paypal_client_id
 PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 PAYPAL_WEBHOOK_ID=your_paypal_webhook_id
 
-# n8n Integration
-N8N_WEBHOOK_URL=your_n8n_webhook_url
-
-# Telegram Bot Configuration
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-
 # External APIs
+OPENAI_API_KEY=your_openai_api_key
 APOLLO_API_KEY=your_apollo_api_key
-RELEVANCE_API_KEY=your_relevance_api_key
+APIFY_API_KEY=your_apify_api_key
+PERPLEXITY_API_KEY=your_perplexity_api_key
 ```
 
 ### 4. Database Setup

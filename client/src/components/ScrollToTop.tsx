@@ -123,7 +123,7 @@ export function ScrollToTop({
     >
       <ChevronUp
         className={styles.scrollToTopIcon}
-        size={20}
+        size={18}
         strokeWidth={2.5}
         aria-hidden="true"
       />

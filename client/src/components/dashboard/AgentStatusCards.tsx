@@ -1,20 +1,26 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  Search, 
-  Linkedin, 
-  Mail, 
-  Activity, 
-  Clock, 
-  CheckCircle, 
+import {
+  Search,
+  Linkedin,
+  Mail,
+  Activity,
+  Clock,
+  CheckCircle,
   AlertCircle,
   Zap,
   TrendingUp,
   Settings,
   Play,
-  Pause
+  Pause,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +29,11 @@ import {
   DashboardStaggerContainer,
 } from "@/components/ui/dashboard-parallax";
 
-import { AgentStatus, SubscriptionPlan, PLAN_FEATURES } from "@/types/lead-generation";
+import {
+  AgentStatus,
+  SubscriptionPlan,
+  PLAN_FEATURES,
+} from "@/types/lead-generation";
 
 interface AgentStatusCardsProps {
   agents: AgentStatus[];
@@ -35,14 +45,14 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
 
   const getAgentIcon = (agentName: AgentStatus["name"]) => {
     switch (agentName) {
-      case "LeadGen Agent":
-        return Search;
-      case "LinkedIn Research Agent":
-        return Linkedin;
-      case "Auto-Reply Agent":
-        return Mail;
+      case "Falcon":
+        return "/falcon.png";
+      case "Sage":
+        return "/sage.png";
+      case "Sentinel":
+        return "/sentinel.png";
       default:
-        return Activity;
+        return null;
     }
   };
 
@@ -53,46 +63,46 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
           bg: "bg-green-500/20",
           text: "text-green-400",
           border: "border-green-500/30",
-          icon: CheckCircle
+          icon: CheckCircle,
         };
       case "processing":
         return {
           bg: "bg-blue-500/20",
           text: "text-blue-400",
           border: "border-blue-500/30",
-          icon: Activity
+          icon: Activity,
         };
       case "idle":
         return {
           bg: "bg-yellow-500/20",
           text: "text-yellow-400",
           border: "border-yellow-500/30",
-          icon: Clock
+          icon: Clock,
         };
       case "error":
         return {
           bg: "bg-red-500/20",
           text: "text-red-400",
           border: "border-red-500/30",
-          icon: AlertCircle
+          icon: AlertCircle,
         };
       default:
         return {
           bg: "bg-gray-500/20",
           text: "text-gray-400",
           border: "border-gray-500/30",
-          icon: Clock
+          icon: Clock,
         };
     }
   };
 
   const getAgentDescription = (agentName: AgentStatus["name"]) => {
     switch (agentName) {
-      case "LeadGen Agent":
+      case "Falcon":
         return "Discovering qualified prospects based on your targeting criteria";
-      case "LinkedIn Research Agent":
+      case "Sage":
         return "Analyzing LinkedIn profiles and generating detailed research reports";
-      case "Auto-Reply Agent":
+      case "Sentinel":
         return "Automatically responding to sales inquiries with personalized messages";
       default:
         return "AI agent working on your behalf";
@@ -102,8 +112,10 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
   const formatLastActivity = (lastActivity: string) => {
     const date = new Date(lastActivity);
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
     if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -119,13 +131,15 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-dashboard-text-primary">AI Agent Status</h3>
+          <h3 className="text-xl font-semibold text-dashboard-text-primary">
+            AI Agent Status
+          </h3>
           <p className="text-dashboard-text-secondary">
             Monitor your active AI agents and their performance
           </p>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           className="border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-interactive-hover"
         >
@@ -137,10 +151,13 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
       <DashboardStaggerContainer staggerDelay={0.1}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map((agent, index) => {
-            const Icon = getAgentIcon(agent.name);
+            const agentImageSrc = getAgentIcon(agent.name);
             const statusConfig = getStatusColor(agent.status);
             const StatusIcon = statusConfig.icon;
-            const progress = calculateProgress(agent.tasksCompleted, agent.tasksInQueue);
+            const progress = calculateProgress(
+              agent.tasksCompleted,
+              agent.tasksInQueue
+            );
 
             return (
               <DashboardParallaxItem
@@ -153,8 +170,18 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-dashboard-primary/20">
-                          <Icon className="w-5 h-5 text-dashboard-primary" />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-dashboard-primary/10">
+                          {agentImageSrc ? (
+                            <img
+                              src={agentImageSrc}
+                              alt={`${agent.name} Agent`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Activity className="w-6 h-6 text-dashboard-primary" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <CardTitle className="text-dashboard-text-primary text-lg">
@@ -165,9 +192,12 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                           </CardDescription>
                         </div>
                       </div>
-                      <Badge className={`${statusConfig.bg} ${statusConfig.text} ${statusConfig.border} border`}>
+                      <Badge
+                        className={`${statusConfig.bg} ${statusConfig.text} ${statusConfig.border} border`}
+                      >
                         <StatusIcon className="w-3 h-3 mr-1" />
-                        {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
+                        {agent.status.charAt(0).toUpperCase() +
+                          agent.status.slice(1)}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -178,7 +208,9 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-dashboard-secondary" />
-                          <span className="text-sm text-dashboard-text-secondary">Completed</span>
+                          <span className="text-sm text-dashboard-text-secondary">
+                            Completed
+                          </span>
                         </div>
                         <div className="text-xl font-bold text-dashboard-text-primary">
                           {agent.tasksCompleted.toLocaleString()}
@@ -187,7 +219,9 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-dashboard-primary" />
-                          <span className="text-sm text-dashboard-text-secondary">In Queue</span>
+                          <span className="text-sm text-dashboard-text-secondary">
+                            In Queue
+                          </span>
                         </div>
                         <div className="text-xl font-bold text-dashboard-text-primary">
                           {agent.tasksInQueue}
@@ -198,15 +232,14 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                     {/* Progress Bar */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-dashboard-text-secondary">Task Progress</span>
+                        <span className="text-dashboard-text-secondary">
+                          Task Progress
+                        </span>
                         <span className="text-dashboard-text-primary font-medium">
                           {progress.toFixed(1)}%
                         </span>
                       </div>
-                      <Progress 
-                        value={progress} 
-                        className="h-2"
-                      />
+                      <Progress value={progress} className="h-2" />
                     </div>
 
                     {/* Uptime and Last Activity */}
@@ -214,7 +247,9 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Zap className="w-4 h-4 text-dashboard-secondary" />
-                          <span className="text-sm text-dashboard-text-secondary">Uptime</span>
+                          <span className="text-sm text-dashboard-text-secondary">
+                            Uptime
+                          </span>
                         </div>
                         <span className="text-sm font-medium text-dashboard-text-primary">
                           {agent.uptime}
@@ -223,7 +258,9 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Activity className="w-4 h-4 text-dashboard-primary" />
-                          <span className="text-sm text-dashboard-text-secondary">Last Activity</span>
+                          <span className="text-sm text-dashboard-text-secondary">
+                            Last Activity
+                          </span>
                         </div>
                         <span className="text-sm font-medium text-dashboard-text-primary">
                           {formatLastActivity(agent.lastActivity)}
@@ -233,27 +270,28 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
 
                     {/* Agent Controls */}
                     <div className="flex items-center gap-2 pt-2">
-                      {agent.status === "active" || agent.status === "processing" ? (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                      {agent.status === "active" ||
+                      agent.status === "processing" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="flex-1 border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-interactive-hover"
                         >
                           <Pause className="w-3 h-3 mr-2" />
                           Pause
                         </Button>
                       ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="flex-1 border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-interactive-hover"
                         >
                           <Play className="w-3 h-3 mr-2" />
                           Start
                         </Button>
                       )}
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="border-dashboard-border-primary text-dashboard-text-primary hover:bg-dashboard-interactive-hover"
                       >
@@ -279,12 +317,16 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-gray-500/20">
-                            <Linkedin className="w-5 h-5 text-gray-400" />
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-500/20">
+                            <img
+                              src="/sage.png"
+                              alt="Sage Agent"
+                              className="w-full h-full object-cover grayscale opacity-50"
+                            />
                           </div>
                           <div>
                             <CardTitle className="text-gray-400 text-lg">
-                              LinkedIn Research Agent
+                              Sage
                             </CardTitle>
                             <CardDescription className="text-gray-500 text-sm">
                               Unlock with Professional plan
@@ -302,7 +344,7 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                         <p className="text-sm text-gray-500 mb-4">
                           Generate detailed LinkedIn research reports
                         </p>
-                        <Button 
+                        <Button
                           size="sm"
                           className="bg-dashboard-primary hover:bg-dashboard-primary/90"
                         >
@@ -324,12 +366,16 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-gray-500/20">
-                            <Mail className="w-5 h-5 text-gray-400" />
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-500/20">
+                            <img
+                              src="/sentinel.png"
+                              alt="Sentinel Agent"
+                              className="w-full h-full object-cover grayscale opacity-50"
+                            />
                           </div>
                           <div>
                             <CardTitle className="text-gray-400 text-lg">
-                              Auto-Reply Agent
+                              Sentinel
                             </CardTitle>
                             <CardDescription className="text-gray-500 text-sm">
                               Unlock with Ultra plan
@@ -347,7 +393,7 @@ export function AgentStatusCards({ agents, userPlan }: AgentStatusCardsProps) {
                         <p className="text-sm text-gray-500 mb-4">
                           Automate email responses and follow-ups
                         </p>
-                        <Button 
+                        <Button
                           size="sm"
                           className="bg-dashboard-primary hover:bg-dashboard-primary/90"
                         >

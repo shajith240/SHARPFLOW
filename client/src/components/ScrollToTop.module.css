@@ -1,67 +1,70 @@
-/* SharpFlow Scroll to Top Button Styles */
+/* SharpFlow Scroll to Top Button Styles - Apple-Inspired Professional Design */
 
 .scrollToTopButton {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #38b6ff 0%, #c1ff72 100%);
-  color: #000;
+  bottom: 24px;
+  right: 24px;
+  width: 40px; /* Optimized size for better visual balance */
+  height: 40px;
+  border-radius: 10px; /* Proportionally adjusted border radius */
+  border: 1px solid rgba(97, 97, 97, 0.3); /* Subtle border using --border color */
+  background: #181818; /* Elevated surface color from design system */
+  color: #f5f5f5; /* Primary text color */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4),
+    /* Proportionally adjusted shadow */ 0 1px 2px rgba(0, 0, 0, 0.2); /* Subtle inner shadow */
+  transition: opacity 0.25s ease, transform 0.25s ease; /* Apple-inspired fade-only transitions */
   z-index: 9999;
   opacity: 0;
-  transform: translateY(20px) scale(0.8);
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  transform: translateY(16px); /* Proportionally reduced entrance animation */
+  backdrop-filter: blur(12px); /* Slightly more blur for glass effect */
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .scrollToTopButton.visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  animation: fadeInUp 0.4s ease-out forwards;
+  transform: translateY(0);
 }
 
 .scrollToTopButton:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(56, 182, 255, 0.4), 0 4px 8px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #2ea5ff 0%, #b8ff5f 100%);
+  background: #242424; /* Secondary surface color for hover state */
+  border-color: rgba(56, 182, 255, 0.5); /* Blue brand accent on hover */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(56, 182, 255, 0.2); /* Subtle blue glow */
 }
 
 .scrollToTopButton:active {
-  transform: translateY(0) scale(0.95);
+  background: #1a1a1a; /* Slightly darker for active state */
+  transform: translateY(1px); /* Subtle press effect */
   transition: all 0.1s ease-out;
 }
 
 .scrollToTopButton:focus {
   outline: none;
-  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1),
-    0 0 0 3px rgba(56, 182, 255, 0.3);
+  border-color: #38b6ff; /* Blue brand color for focus */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 2px rgba(56, 182, 255, 0.4); /* Blue focus ring */
 }
 
 /* Removed disabled state to ensure click responsiveness */
 
 .scrollToTopButton.scrolling {
-  background: linear-gradient(135deg, #2ea5ff 0%, #b8ff5f 100%);
-  animation: pulse 1s ease-in-out infinite;
+  background: #242424; /* Secondary surface for scrolling state */
+  border-color: rgba(193, 255, 114, 0.5); /* Lime green accent for scrolling */
+  animation: subtlePulse 2s ease-in-out infinite; /* Slower, more subtle animation */
 }
 
 .scrollToTopIcon {
-  transition: transform 0.3s ease;
+  transition: opacity 0.25s ease; /* Apple-inspired fade transition */
   z-index: 2;
   position: relative;
 }
 
 .scrollToTopButton:hover .scrollToTopIcon {
-  transform: translateY(-1px);
+  opacity: 0.9; /* Subtle opacity change instead of transform */
 }
 
 .scrollToTopRipple {
@@ -70,108 +73,137 @@
   left: 50%;
   width: 0;
   height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  border-radius: 5px; /* Proportionally adjusted to match button border radius */
+  background: rgba(56, 182, 255, 0.2); /* Blue brand color for ripple */
   transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
+  transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease;
   pointer-events: none;
+  opacity: 0;
 }
 
 .scrollToTopButton:active .scrollToTopRipple {
-  width: 60px;
-  height: 60px;
+  width: 40px; /* Match optimized button size */
+  height: 40px;
+  opacity: 1;
 }
 
-/* Animations */
+/* Animations - Apple-inspired subtle effects */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.8);
+    transform: translateY(
+      16px
+    ); /* Proportionally adjusted entrance animation */
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
-@keyframes pulse {
+@keyframes subtlePulse {
   0%,
   100% {
-    transform: translateY(0) scale(1);
+    opacity: 1;
+    border-color: rgba(193, 255, 114, 0.5);
   }
   50% {
-    transform: translateY(-1px) scale(1.02);
+    opacity: 0.9;
+    border-color: rgba(193, 255, 114, 0.7);
   }
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
+/* Mobile responsiveness - Optimized for accessibility and visual balance */
+@media (max-width: 640px) {
   .scrollToTopButton {
-    bottom: 20px;
-    right: 20px;
-    width: 44px;
+    bottom: 80px; /* Above mobile navigation if present */
+    right: 16px;
+    width: 44px; /* Maintains 44px minimum touch target for accessibility */
     height: 44px;
+    border-radius: 11px; /* Proportionally adjusted */
   }
 
   .scrollToTopIcon {
-    width: 18px;
+    width: 20px; /* Optimal icon size for 44px container */
+    height: 20px;
+  }
+
+  .scrollToTopButton:active .scrollToTopRipple {
+    width: 44px; /* Match mobile button size */
+    height: 44px;
+  }
+}
+
+/* Tablet adjustments - Balanced size for medium screens */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .scrollToTopButton {
+    bottom: 20px;
+    right: 20px;
+    width: 40px; /* Optimal size for tablet viewing */
+    height: 40px;
+  }
+
+  .scrollToTopIcon {
+    width: 18px; /* Proportional icon size */
     height: 18px;
   }
 }
 
-/* Ensure it doesn't interfere with mobile navigation */
-@media (max-width: 640px) {
-  .scrollToTopButton {
-    bottom: 90px; /* Above mobile navigation if present */
-    right: 16px;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .scrollToTopButton {
-    bottom: 25px;
-    right: 25px;
-  }
-}
-
-/* Large screens */
+/* Large screens - Slightly larger but still proportional */
 @media (min-width: 1440px) {
   .scrollToTopButton {
-    bottom: 40px;
-    right: 40px;
-    width: 52px;
-    height: 52px;
+    bottom: 32px;
+    right: 32px;
+    width: 44px; /* Scales appropriately for large displays */
+    height: 44px;
+    border-radius: 11px; /* Proportionally adjusted */
   }
 
   .scrollToTopIcon {
-    width: 22px;
-    height: 22px;
+    width: 20px; /* Optimal icon size for larger button */
+    height: 20px;
+  }
+
+  .scrollToTopButton:active .scrollToTopRipple {
+    width: 44px; /* Match large screen button size */
+    height: 44px;
   }
 }
 
-/* High contrast mode support */
+/* High contrast mode support - Enhanced for accessibility */
 @media (prefers-contrast: high) {
   .scrollToTopButton {
     background: #000 !important;
     color: #fff !important;
-    border: 2px solid #fff;
+    border: 2px solid #fff !important;
+    box-shadow: none !important; /* Remove shadows for clarity */
   }
 
   .scrollToTopButton:hover {
     background: #333 !important;
+    border-color: #fff !important;
+  }
+
+  .scrollToTopButton:focus,
+  .scrollToTopButton:focus-visible {
+    border-color: #fff !important;
+    box-shadow: 0 0 0 3px #fff !important; /* High contrast focus ring */
   }
 }
 
-/* Reduced motion support */
+/* Reduced motion support - Apple-inspired accessibility */
 @media (prefers-reduced-motion: reduce) {
   .scrollToTopButton {
-    transition: opacity 0.3s ease;
+    transition: opacity 0.25s ease; /* Keep fade transition only */
     animation: none;
   }
 
   .scrollToTopButton:hover {
-    transform: none;
+    transform: none; /* Remove any transform effects */
+  }
+
+  .scrollToTopButton:active {
+    transform: none; /* Remove press effect */
   }
 
   .scrollToTopIcon {
@@ -179,32 +211,37 @@
   }
 
   .scrollToTopButton:hover .scrollToTopIcon {
-    transform: none;
+    opacity: 1; /* Remove opacity change */
   }
 
   .scrollToTopButton.scrolling {
     animation: none;
+    border-color: rgba(193, 255, 114, 0.6); /* Static lime green accent */
   }
 }
 
-/* Dark mode support */
+/* Dark mode support - Enhanced for SharpFlow design system */
 @media (prefers-color-scheme: dark) {
   .scrollToTopButton {
-    background: linear-gradient(135deg, #38b6ff 0%, #c1ff72 100%);
-    color: #000;
-    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: #181818; /* Elevated surface */
+    color: #f5f5f5; /* Primary text */
+    border-color: rgba(97, 97, 97, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   .scrollToTopButton:hover {
-    box-shadow: 0 8px 25px rgba(56, 182, 255, 0.5),
-      0 4px 8px rgba(0, 0, 0, 0.25);
+    background: #242424; /* Secondary surface */
+    border-color: rgba(56, 182, 255, 0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(56, 182, 255, 0.3);
   }
 }
 
-/* Focus visible for better accessibility */
+/* Focus visible for better accessibility - Enhanced for Apple-inspired design */
 .scrollToTopButton:focus-visible {
-  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1),
-    0 0 0 3px rgba(56, 182, 255, 0.5);
+  border-color: #38b6ff; /* Blue brand color */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 2px rgba(56, 182, 255, 0.5); /* Stronger focus ring */
 }
 
 /* Print styles */

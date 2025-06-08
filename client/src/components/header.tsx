@@ -8,6 +8,7 @@ import {
   FileText,
   MessageSquare,
   CreditCard,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
@@ -90,6 +91,13 @@ export default function Header() {
     }
   };
 
+  const handleOwnerAuth = () => {
+    // Redirect to sign-in page with owner parameter
+    setLocation(
+      "/sign-in?owner=true&message=Please%20enter%20your%20secret%20key%20to%20access%20Owner%20Dashboard"
+    );
+  };
+
   // Navigation items for cursor.com-style navbar
   const navItems = [
     { name: "Services", href: "#services" },
@@ -118,9 +126,9 @@ export default function Header() {
           {/* Logo - Anchored to left edge */}
           <div className="flex items-center flex-shrink-0">
             <img
-              src="/sharpflow.png"
+              src="/navbar_logo.svg"
               alt="SharpFlow Logo"
-              className="h-8 w-auto"
+              className="h-14 w-auto"
             />
           </div>
 
@@ -176,6 +184,21 @@ export default function Header() {
                         {user.firstName || user.email}
                       </span>
                     </div>
+
+                    {/* Owner Authentication Button - Only show for non-owner users */}
+                    {user.email !== "shajith240@gmail.com" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleOwnerAuth}
+                        className="flex items-center space-x-2 text-sm h-9 border-[#C1FF72]/30 text-[#C1FF72] hover:bg-[#C1FF72]/10"
+                        title="Switch to Owner Dashboard"
+                      >
+                        <Crown className="w-4 h-4" />
+                        <span>Owner</span>
+                      </Button>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"

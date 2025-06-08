@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ParallaxSectionProps extends React.HTMLAttributes<HTMLElement> {
+interface ParallaxSectionProps {
   children: React.ReactNode;
   backgroundImage?: string;
   backgroundContent?: React.ReactNode;
@@ -13,6 +13,7 @@ interface ParallaxSectionProps extends React.HTMLAttributes<HTMLElement> {
   speed?: number; // Speed of parallax effect (0-1)
   direction?: "up" | "down"; // Direction of parallax movement
   disabled?: boolean; // Disable parallax on mobile
+  id?: string; // HTML id attribute
 }
 
 export function ParallaxSection({
@@ -25,7 +26,7 @@ export function ParallaxSection({
   speed = 0.3,
   direction = "up",
   disabled = false,
-  ...props
+  id,
 }: ParallaxSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -45,8 +46,8 @@ export function ParallaxSection({
   return (
     <motion.section
       ref={sectionRef}
+      id={id}
       className={cn("relative overflow-hidden", className)}
-      {...props}
     >
       {/* Background layer with parallax effect */}
       {(backgroundImage || backgroundContent) && (

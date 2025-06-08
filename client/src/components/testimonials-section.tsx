@@ -17,7 +17,7 @@ const testimonials = [
   },
   {
     quote:
-      "The LinkedIn Research Agent delivers detailed prospect reports directly to my inbox. We've increased our conversion rate by 250% with better-informed outreach.",
+      "Sage delivers detailed prospect reports directly to my inbox. We've increased our conversion rate by 250% with better-informed outreach.",
     author: "Sarah Rodriguez",
     role: "Sales Director, Growth Capital",
     image:
@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     quote:
-      "The Auto-Reply Agent handles our initial sales inquiries perfectly. We're responding to leads 24/7 with personalized messages, and our response rate has tripled.",
+      "Sentinel handles our initial sales inquiries perfectly. We're responding to leads 24/7 with personalized messages, and our response rate has tripled.",
     author: "David Kim",
     role: "Head of Sales, Innovate Labs",
     image:

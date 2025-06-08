@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { SubscriptionData } from "@/types/subscription";
 import Header from "../components/header";
 import HeroSection from "../components/hero-section";
 import ServicesSection from "../components/services-section";
@@ -29,7 +30,7 @@ export default function Home() {
     data: subscriptionData,
     isLoading: subscriptionLoading,
     error: subscriptionError,
-  } = useQuery({
+  } = useQuery<SubscriptionData>({
     queryKey: ["/api/payments/subscription"],
     enabled: isAuthenticated && !authLoading, // Only check subscription if user is authenticated
     staleTime: 0, // Always refetch to get latest subscription data

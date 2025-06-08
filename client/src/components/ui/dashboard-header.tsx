@@ -18,26 +18,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
+import { NotificationCenter } from "../notifications/NotificationCenter";
 
 interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
   className?: string;
+  showNotifications?: boolean;
 }
 
 export function DashboardHeader({
   title = "SharpFlow Dashboard",
   subtitle,
   className = "",
+  showNotifications = false,
 }: DashboardHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Use dashboard scroll hook for header behavior
+  // Use premium navbar auto-hide hook with professional UX behavior
   const { headerVisible, isScrolled, isAtTop } = useDashboardScroll({
-    threshold: 50,
-    hideThreshold: 100,
+    threshold: 10,
     hideOnScrollDown: true,
   });
 
@@ -57,35 +59,41 @@ export function DashboardHeader({
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 apple-transition-fast ${
+      className={`fixed top-0 left-0 right-0 z-50 ${
         isAtTop
           ? "bg-dashboard-bg-primary/95 backdrop-blur-sm border-b border-dashboard-border-primary"
           : isScrolled
           ? "bg-dashboard-bg-primary/90 backdrop-blur-md border-b border-dashboard-border-primary/50"
           : "bg-transparent border-none"
       } ${className}`}
+      style={{
+        transform: headerVisible
+          ? "translate3d(0, 0, 0)"
+          : "translate3d(0, -100%, 0)",
+        transition: "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
+        perspective: "1000px",
+        WebkitPerspective: "1000px",
+      }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-18">
-          {/* Logo and Company Tagline Section */}
-          <div className="flex items-center space-x-4">
+          {/* Logo Section */}
+          <div className="flex items-center">
             <img
-              src="/sharpflow.png"
+              src="/navbar_logo.svg"
               alt="SharpFlow"
-              className="h-8 w-auto lg:h-10"
+              className="h-14 w-auto lg:h-16"
             />
-            <div className="hidden md:block">
-              <p
-                className="text-sm lg:text-base font-semibold"
-                style={{ color: "#C1FF72" }}
-              >
-                Your Edge in the Lead Game.
-              </p>
-            </div>
           </div>
 
           {/* User Profile Section */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center space-x-3">
+            {/* Notification Center */}
+            {showNotifications && <NotificationCenter />}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -93,15 +101,20 @@ export function DashboardHeader({
                   className="flex items-center space-x-3 px-3 py-2 apple-transition-fast hover:bg-dashboard-interactive-hover rounded-lg"
                 >
                   <ProfileImage
-                    user={user}
                     size="sm"
                     className="h-8 w-8"
-                    userName={user?.user_metadata?.full_name}
+                    userName={
+                      user?.firstName && user?.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user?.firstName
+                    }
                     userEmail={user?.email}
                   />
                   <div className="text-left">
                     <p className="text-sm font-medium text-dashboard-text-primary">
-                      {user?.user_metadata?.full_name || "User"}
+                      {user?.firstName && user?.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user?.firstName || "User"}
                     </p>
                   </div>
                   <ChevronDown className="h-4 w-4 text-dashboard-text-secondary" />
@@ -146,8 +159,11 @@ export function DashboardHeader({
             </DropdownMenu>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile Menu Button and Notifications */}
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Mobile Notification Center */}
+            {showNotifications && <NotificationCenter />}
+
             <Button
               variant="ghost"
               size="sm"
@@ -169,15 +185,20 @@ export function DashboardHeader({
             <div className="flex flex-col space-y-3">
               <div className="flex items-center space-x-3 px-2">
                 <ProfileImage
-                  user={user}
                   size="sm"
                   className="h-10 w-10"
-                  userName={user?.user_metadata?.full_name}
+                  userName={
+                    user?.firstName && user?.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user?.firstName
+                  }
                   userEmail={user?.email}
                 />
                 <div>
                   <p className="text-sm font-medium text-dashboard-text-primary">
-                    {user?.user_metadata?.full_name || "User"}
+                    {user?.firstName && user?.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user?.firstName || "User"}
                   </p>
                 </div>
               </div>
